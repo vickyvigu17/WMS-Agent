@@ -8,7 +8,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Simple in-memory storage for demo (we'll upgrade to SQLite later)
+// Simple in-memory storage for demo
 let clients = [
   { id: 1, name: "Amazon Logistics", industry: "E-commerce", company_size: "Large", location: "Seattle, WA", created_at: new Date() },
   { id: 2, name: "Walmart Supply Chain", industry: "Retail", company_size: "Large", location: "Bentonville, AR", created_at: new Date() }
@@ -25,7 +25,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
+      scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'"]
     }
@@ -62,10 +62,18 @@ app.get('/api/clients/:id', (req, res) => {
   if (!client) return res.status(404).json({ error: 'Client not found' });
   res.json(client);
 });
+
 app.post('/api/clients', (req, res) => {
   const client = { id: Date.now(), ...req.body, created_at: new Date() };
   clients.push(client);
   res.status(201).json(client);
+});
+
+app.put('/api/clients/:id', (req, res) => {
+  const index = clients.findIndex(c => c.id == req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Client not found' });
+  clients[index] = { ...clients[index], ...req.body };
+  res.json(clients[index]);
 });
 
 // Project routes
@@ -78,11 +86,17 @@ app.get('/api/clients/:clientId/projects', (req, res) => {
   res.json(clientProjects);
 });
 
+app.get('/api/projects/:id', (req, res) => {
+  const project = projects.find(p => p.id == req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  res.json(project);
+});
+
 app.post('/api/clients/:clientId/projects', (req, res) => {
   const project = { 
     id: Date.now(), 
     client_id: parseInt(req.params.clientId),
-    ...req.body,
+    ...req.body, 
     created_at: new Date() 
   };
   projects.push(project);
@@ -91,19 +105,24 @@ app.post('/api/clients/:clientId/projects', (req, res) => {
 
 // Dashboard route
 app.get('/api/dashboard', (req, res) => {
+  const answeredQuestions = questions.filter(q => q.answered).length;
+  const completionRate = questions.length > 0 ? Math.round((answeredQuestions / questions.length) * 100) : 0;
+  
   res.json({
     summary: {
       total_clients: clients.length,
-      total_projects: projects.length
-        total_questions: questions.length,
-      answered_questions: 0,
-      question_completion_rate: 0
+      total_projects: projects.length,
+      total_questions: questions.length,
+      answered_questions: answeredQuestions,
+      question_completion_rate: completionRate
     },
     recent_projects: projects.slice(-5),
     industry_distribution: [
-      { industry: 'E-commerce', count: 1 },
-      { industry: 'Retail', count: 1 }
-    ]
+      { industry: 'E-commerce', count: clients.filter(c => c.industry === 'E-commerce').length },
+      { industry: 'Retail', count: clients.filter(c => c.industry === 'Retail').length },
+      { industry: 'Manufacturing', count: clients.filter(c => c.industry === 'Manufacturing').length },
+      { industry: 'Healthcare', count: clients.filter(c => c.industry === 'Healthcare').length }
+    ].filter(item => item.count > 0)
   });
 });
 
@@ -115,14 +134,33 @@ app.get('/api/wms-processes', (req, res) => {
       name: "Receiving",
       category: "Inbound",
       description: "Process of accepting and processing incoming goods",
-      typical_questions: ["What is your current receiving capacity?", "How do you handle advance shipment notifications?"]
+      typical_questions: [
+        "What is your current receiving capacity?", 
+        "How do you handle advance shipment notifications?",
+        "What receiving documentation do you currently use?"
+      ]
     },
     {
       id: 2,
       name: "Put-away",
       category: "Inbound", 
       description: "Storing received goods in appropriate warehouse locations",
-      typical_questions: ["What put-away strategies do you currently use?", "How do you determine optimal storage locations?"]
+      typical_questions: [
+        "What put-away strategies do you currently use?", 
+        "How do you determine optimal storage locations?",
+        "Do you use directed or operator-directed put-away?"
+      ]
+    },
+    {
+      id: 3,
+      name: "Picking",
+      category: "Outbound",
+      description: "Retrieving items from storage locations to fulfill orders",
+      typical_questions: [
+        "What picking methods do you currently use?",
+        "How do you optimize pick paths?",
+        "What is your current pick accuracy rate?"
+      ]
     }
   ]);
 });
@@ -150,6 +188,7 @@ app.get('/api/projects/:projectId/questions', (req, res) => {
   const projectQuestions = questions.filter(q => q.project_id == req.params.projectId);
   res.json(projectQuestions);
 });
+
 app.post('/api/projects/:projectId/questions/generate', (req, res) => {
   const generatedQuestions = [
     {
@@ -171,8 +210,16 @@ app.post('/api/projects/:projectId/questions/generate', (req, res) => {
       created_at: new Date()
     }
   ];
+  
   questions.push(...generatedQuestions);
   res.json(generatedQuestions);
+});
+
+app.put('/api/questions/:id/answer', (req, res) => {
+  const index = questions.findIndex(q => q.id == req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Question not found' });
+  questions[index] = { ...questions[index], answer: req.body.answer, answered: true };
+  res.json(questions[index]);
 });
 
 // Serve React app for production
@@ -192,12 +239,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
+
 app.listen(PORT, () => {
   console.log(`WMS Consultant Agent server running on port ${PORT}`);
 });
-
-  
-
-  
-      
-        
