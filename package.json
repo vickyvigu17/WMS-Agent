@@ -1,18 +1,13 @@
 {
   "name": "wms-consultant-agent",
   "version": "1.0.0",
-  "description": "WMS Implementation Consultant Web Agent for client requirements analysis and project management",
+  "description": "WMS Implementation Consultant Web Agent",
+  "main": "server.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd server && npm run dev",
-    "client": "cd client && npm start",
-    "build": "cd client && npm run build",
-    "install-all": "npm install && cd server && npm install && cd ../client && npm install"
+    "start": "node server.js"
   },
-  "keywords": ["WMS", "consultant", "supply-chain", "warehouse-management"],
-  "author": "WMS Consultant",
-  "license": "MIT",
-  "devDependencies": {
-    "concurrently": "^7.6.0"
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   }
 }
