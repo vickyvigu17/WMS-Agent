@@ -1,0 +1,24 @@
+{
+  "name": "wms-consultant-server",
+  "version": "1.0.0",
+  "description": "Backend server for WMS Consultant Agent",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "sqlite3": "^5.1.6",
+    "axios": "^1.5.0",
+    "openai": "^4.11.1",
+    "cheerio": "^1.0.0-rc.12",
+    "express-rate-limit": "^6.10.0",
+    "helmet": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
