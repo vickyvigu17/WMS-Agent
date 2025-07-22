@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMS Agent - File Copier</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .file-section {
+            background: white;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .file-header {
+            background: #1890ff;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-path {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-weight: bold;
+        }
+        .copy-btn {
+            background: #52c41a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .copy-btn:hover {
+            background: #389e0d;
+        }
+        .copy-btn.copied {
+            background: #ff7875;
+        }
+        .code-content {
+            background: #f6f8fa;
+            padding: 20px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .instructions {
+            background: #e6f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #1890ff;
+        }
+        .step {
+            background: #f0f9ff;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid #1890ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 WMS Consultant Agent - File Copier</h1>
+    
+    <div class="instructions">
+        <h3>📋 Instructions:</h3>
+        <div class="step">1. Click the <strong>COPY</strong> button for each file below</div>
+        <div class="step">2. Go to your GitHub repo → "Add file" → "Create new file"</div>
+        <div class="step">3. Enter the file path exactly as shown (e.g., <code>client/src/App.js</code>)</div>
+        <div class="step">4. Paste the copied content and commit</div>
+        <div class="step">5. Deploy and enjoy! 🎉</div>
+    </div>
+
+    <!-- File 1: Updated server.js -->
+    <div class="file-section">
+        <div class="file-header">
+            <span class="file-path">server.js</span>
+            <button class="copy-btn" onclick="copyToClipboard('server-js', this)">COPY</button>
+        </div>
+        <div class="code-content">
+            <pre id="server-js">const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const path = require('path');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Simple in-memory storage for demo (we'll upgrade to SQLite later)
+let clients = [
+  { id: 1, name: "Amazon Logistics", industry: "E-commerce", company_size: "Large", location: "Seattle, WA", created_at: new Date() },
+  { id: 2, name: "Walmart Supply Chain", industry: "Retail", company_size: "Large", location: "Bentonville, AR", created_at: new Date() }
+];
+let projects = [
+  { id: 1, client_id: 1, name: "WMS Implementation Phase 1", status: "active", created_at: new Date() }
+];
+let questions = [];
+let marketResearch = [];
+
+// Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"]
+    }
+  }
+}));
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use('/api', limiter);
+
+// Serve static files from React build (production)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Client routes
+app.get('/api/clients', (req, res) => {
+  res.json(clients);
+});
+
+app.get('/api/clients/:id', (req, res) => {
+  const client = clients.find(c => c.id == req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  res.json(client);
+});
+
+app.post('/api/clients', (req, res) => {
+  const client = { id: Date.now(), ...req.body, created_at: new Date() };
+  clients.push(client);
+  res.status(201).json(client);
+});
+
+app.put('/api/clients/:id', (req, res) => {
+  const index = clients.findIndex(c => c.id == req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Client not found' });
+  clients[index] = { ...clients[index], ...req.body };
+  res.json(clients[index]);
+});
+
+// Project routes
+app.get('/api/projects', (req, res) => {
+  res.json(projects);
+});
+
+app.get('/api/clients/:clientId/projects', (req, res) => {
+  const clientProjects = projects.filter(p => p.client_id == req.params.clientId);
+  res.json(clientProjects);
+});
+
+app.get('/api/projects/:id', (req, res) => {
+  const project = projects.find(p => p.id == req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  res.json(project);
+});
+
+app.post('/api/clients/:clientId/projects', (req, res) => {
+  const project = { 
+    id: Date.now(), 
+    client_id: parseInt(req.params.clientId),
+    ...req.body, 
+    created_at: new Date() 
+  };
+  projects.push(project);
+  res.status(201).json(project);
+});
+
+// Dashboard route
+app.get('/api/dashboard', (req, res) => {
+  res.json({
+    summary: {
+      total_clients: clients.length,
+      total_projects: projects.length,
+      total_questions: questions.length,
+      answered_questions: questions.filter(q => q.answered).length,
+      question_completion_rate: questions.length > 0 ? Math.round((questions.filter(q => q.answered).length / questions.length) * 100) : 0
+    },
+    recent_projects: projects.slice(-5),
+    industry_distribution: [
+      { industry: 'E-commerce', count: clients.filter(c => c.industry === 'E-commerce').length },
+      { industry: 'Retail', count: clients.filter(c => c.industry === 'Retail').length },
+      { industry: 'Manufacturing', count: clients.filter(c => c.industry === 'Manufacturing').length },
+      { industry: 'Healthcare', count: clients.filter(c => c.industry === 'Healthcare').length }
+    ].filter(item => item.count > 0)
+  });
+});
+
+// WMS Processes route
+app.get('/api/wms-processes', (req, res) => {
+  res.json([
+    {
+      id: 1,
+      name: "Receiving",
+      category: "Inbound",
+      description: "Process of accepting and processing incoming goods",
+      typical_questions: [
+        "What is your current receiving capacity?", 
+        "How do you handle advance shipment notifications?",
+        "What receiving documentation do you currently use?"
+      ]
+    },
+    {
+      id: 2,
+      name: "Put-away",
+      category: "Inbound", 
+      description: "Storing received goods in appropriate warehouse locations",
+      typical_questions: [
+        "What put-away strategies do you currently use?", 
+        "How do you determine optimal storage locations?",
+        "Do you use directed or operator-directed put-away?"
+      ]
+    },
+    {
+      id: 3,
+      name: "Picking",
+      category: "Outbound",
+      description: "Retrieving items from storage locations to fulfill orders",
+      typical_questions: [
+        "What picking methods do you currently use?",
+        "How do you optimize pick paths?",
+        "What is your current pick accuracy rate?"
+      ]
+    },
+    {
+      id: 4,
+      name: "Packing",
+      category: "Outbound",
+      description: "Preparing picked items for shipment",
+      typical_questions: [
+        "What packing stations do you currently have?",
+        "How do you determine optimal packaging?",
+        "Do you use automated packing systems?"
+      ]
+    },
+    {
+      id: 5,
+      name: "Shipping",
+      category: "Outbound",
+      description: "Loading and dispatching packed orders",
+      typical_questions: [
+        "How do you manage shipping schedules?",
+        "What carriers do you work with?",
+        "How do you handle shipping documentation?"
+      ]
+    }
+  ]);
+});
+
+// Market Research routes
+app.get('/api/clients/:clientId/research', (req, res) => {
+  const clientResearch = marketResearch.filter(r => r.client_id == req.params.clientId);
+  res.json(clientResearch);
+});
+
+app.post('/api/clients/:clientId/research', (req, res) => {
+  const research = {
+    id: Date.now(),
+    client_id: parseInt(req.params.clientId),
+    research_type: req.body.research_type,
+    results: `Mock ${req.body.research_type} research results for client`,
+    created_at: new Date()
+  };
+  marketResearch.push(research);
+  res.status(201).json(research);
+});
+
+// Questions routes
+app.get('/api/projects/:projectId/questions', (req, res) => {
+  const projectQuestions = questions.filter(q => q.project_id == req.params.projectId);
+  res.json(projectQuestions);
+});
+
+app.post('/api/projects/:projectId/questions/generate', (req, res) => {
+  const generatedQuestions = [
+    {
+      id: Date.now(),
+      project_id: parseInt(req.params.projectId),
+      category: "WMS Process",
+      question: "What is your current inventory accuracy rate?",
+      priority: "high",
+      answered: false,
+      created_at: new Date()
+    },
+    {
+      id: Date.now() + 1,
+      project_id: parseInt(req.params.projectId),
+      category: "Technical",
+      question: "What ERP system are you currently using?",
+      priority: "medium", 
+      answered: false,
+      created_at: new Date()
+    },
+    {
+      id: Date.now() + 2,
+      project_id: parseInt(req.params.projectId),
+      category: "Business Requirements",
+      question: "What are your peak order volumes during busy seasons?",
+      priority: "high",
+      answered: false,
+      created_at: new Date()
+    }
+  ];
+  
+  questions.push(...generatedQuestions);
+  res.json(generatedQuestions);
+});
+
+app.put('/api/questions/:id/answer', (req, res) => {
+  const index = questions.findIndex(q => q.id == req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Question not found' });
+  questions[index] = { ...questions[index], answer: req.body.answer, answered: true };
+  res.json(questions[index]);
+});
+
+// Serve React app for production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+}
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+app.listen(PORT, () => {
+  console.log(`WMS Consultant Agent server running on port ${PORT}`);
+});</pre>
+        </div>
+    </div>
+
+    <!-- File 2: client/package.json -->
+    <div class="file-section">
+        <div class="file-header">
+            <span class="file-path">client/package.json</span>
+            <button class="copy-btn" onclick="copyToClipboard('client-package', this)">COPY</button>
+        </div>
+        <div class="code-content">
+            <pre id="client-package">{
+  "name": "wms-consultant-client",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.15.0",
+    "react-scripts": "5.0.1",
+    "antd": "^5.9.0",
+    "@ant-design/icons": "^5.2.0",
+    "axios": "^1.5.0",
+    "dayjs": "^1.11.9",
+    "recharts": "^2.8.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:5000"
+}</pre>
+        </div>
+    </div>
+
+    <!-- File 3: client/public/index.html -->
+    <div class="file-section">
+        <div class="file-header">
+            <span class="file-path">client/public/index.html</span>
+            <button class="copy-btn" onclick="copyToClipboard('client-html', this)">COPY</button>
+        </div>
+        <div class="code-content">
+            <pre id="client-html"><!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="WMS Implementation Consultant Agent" />
+    <title>WMS Consultant Agent</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html></pre>
+        </div>
+    </div>
+
+    <!-- File 4: client/src/index.js -->
+    <div class="file-section">
+        <div class="file-header">
+            <span class="file-path">client/src/index.js</span>
+            <button class="copy-btn" onclick="copyToClipboard('client-index', this)">COPY</button>
+        </div>
+        <div class="code-content">
+            <pre id="client-index">import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import 'antd/dist/reset.css';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);</pre>
+        </div>
+    </div>
+
+    <!-- File 5: client/src/App.js -->
+    <div class="file-section">
+        <div class="file-header">
+            <span class="file-path">client/src/App.js</span>
+            <button class="copy-btn" onclick="copyToClipboard('client-app', this)">COPY</button>
+        </div>
+        <div class="code-content">
+            <pre id="client-app">import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Layout, ConfigProvider } from 'antd';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import Dashboard from './pages/Dashboard';
+import Clients from './pages/Clients';
+import ClientDetail from './pages/ClientDetail';
+import Projects from './pages/Projects';
+import ProjectDetail from './pages/ProjectDetail';
+import WMSProcesses from './pages/WMSProcesses';
+import './App.css';
+
+const { Content } = Layout;
+
+function App() {
+  return (
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#1890ff',
+          borderRadius: 6,
+        },
+      }}
+    >
+      <Router>
+        <Layout className="app-layout">
+          <Sidebar />
+          <Layout>
+            <Header />
+            <Content className="app-content">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/clients/:id" element={<ClientDetail />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/projects/:id" element={<ProjectDetail />} />
+                <Route path="/wms-processes" element={<WMSProcesses />} />
+              </Routes>
+            </Content>
+          </Layout>
+        </Layout>
+      </Router>
+    </ConfigProvider>
+  );
+}
+
+export default App;</pre>
+        </div>
+    </div>
+
+    <!-- File 6: client/src/App.css -->
+    <div class="file-section">
+        <div class="file-header">
+            <span class="file-path">client/src/App.css</span>
+            <button class="copy-btn" onclick="copyToClipboard('client-css', this)">COPY</button>
+        </div>
+        <div class="code-content">
+            <pre id="client-css">/* Global Styles */
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-content {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
+}
+
+.sidebar {
+  box-shadow: 2px 0 6px rgba(0, 21, 41, 0.35);
+}
+
+/* Card Styles */
+.ant-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  border-radius: 8px;
+}
+
+.ant-card-head {
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Form Styles */
+.ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.ant-input, .ant-select-selector, .ant-input-number {
+  border-radius: 6px;
+}
+
+/* Table Styles */
+.ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* Button Styles */
+.ant-btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.ant-btn-primary {
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+/* Research Card Styles */
+.research-card {
+  margin-bottom: 16px;
+  border-left: 4px solid #1890ff;
+}
+
+.research-card .ant-card-head {
+  background: #e6f7ff;
+}
+
+/* Question Card Styles */
+.question-card {
+  margin-bottom: 12px;
+}
+
+.question-card.priority-high {
+  border-left: 4px solid #ff4d4f;
+}
+
+.question-card.priority-medium {
+  border-left: 4px solid #faad14;
+}
+
+.question-card.priority-low {
+  border-left: 4px solid #52c41a;
+}
+
+.question-answered {
+  background-color: #f6ffed;
+  border-color: #b7eb8f;
+}
+
+/* Statistics Cards */
+.stat-card {
+  text-align: center;
+  padding: 20px;
+}
+
+.stat-card .anticon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+/* Process Card Styles */
+.process-card {
+  margin-bottom: 16px;
+  transition: all 0.3s;
+}
+
+.process-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.process-category {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.category-inbound {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.category-outbound {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.category-inventory {
+  background: #fff2e8;
+  color: #fa8c16;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app-content {
+    padding: 16px;
+  }
+  
+  .ant-col {
+    margin-bottom: 16px;
+  }
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* Empty States */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8c8c8c;
+}
+
+.empty-state .anticon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  color: #d9d9d9;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId, button) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                button.textContent = 'COPIED!';
+                button.classList.add('copied');
+                
+                setTimeout(function() {
+                    button.textContent = 'COPY';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                button.textContent = 'COPIED!';
+                button.classList.add('copied');
+                
+                setTimeout(function() {
+                    button.textContent = 'COPY';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
