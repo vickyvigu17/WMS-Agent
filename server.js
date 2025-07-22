@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -40,10 +41,10 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Serve static files from React build (production)
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'public')));
-}
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API Routes
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -220,16 +221,9 @@ app.put('/api/questions/:id/answer', (req, res) => {
   res.json(questions[index]);
 });
 
-// Serve React app for production
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  });
-}
-
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'API endpoint not found' });
+// IMPORTANT: Serve React app for ALL non-API routes (must be last)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Error handler
