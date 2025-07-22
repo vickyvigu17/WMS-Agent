@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+*.md
+.DS_Store
+.vscode
+coverage
+.nyc_output
+client/node_modules
+client/build
+server/node_modules
+server/database.sqlite
+server/.env
+logs
+*.log

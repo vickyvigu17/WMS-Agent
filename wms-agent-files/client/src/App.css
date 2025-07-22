@@ -1,0 +1,183 @@
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-content {
+  margin: 16px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  min-height: calc(100vh - 112px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Page titles */
+.page-title {
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 500;
+  color: #262626;
+}
+
+/* Cards */
+.stats-card {
+  text-align: center;
+  padding: 24px;
+}
+
+.stats-card .ant-statistic-title {
+  font-weight: 500;
+  color: #8c8c8c;
+}
+
+.stats-card .ant-statistic-content {
+  color: #1890ff;
+}
+
+/* Tables */
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Forms */
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section h3 {
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #262626;
+}
+
+/* Research cards */
+.research-card {
+  margin-bottom: 16px;
+}
+
+.research-card .ant-card-head-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.research-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.research-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.research-list li {
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.research-list li:last-child {
+  border-bottom: none;
+}
+
+/* Question cards */
+.question-card {
+  margin-bottom: 16px;
+  border-left: 4px solid #1890ff;
+}
+
+.question-card.answered {
+  border-left-color: #52c41a;
+}
+
+.question-priority {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.question-priority.high {
+  background: #fff2e8;
+  color: #fa541c;
+}
+
+.question-priority.medium {
+  background: #fff7e6;
+  color: #fa8c16;
+}
+
+.question-priority.low {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+/* Charts */
+.chart-container {
+  padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-content {
+    margin: 8px;
+    padding: 16px;
+  }
+  
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+/* Loading states */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* Empty states */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #8c8c8c;
+}
+
+.empty-state h3 {
+  color: #262626;
+  margin-bottom: 8px;
+}
+
+/* Success/Error states */
+.success-message {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.error-message {
+  color: #ff4d4f;
+  font-weight: 500;
+}
