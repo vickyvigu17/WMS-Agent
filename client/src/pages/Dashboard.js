@@ -5,7 +5,7 @@ import {
   ProjectOutlined,
   QuestionCircleOutlined,
   CheckCircleOutlined,
-  TrendingUpOutlined
+  RiseOutlined
 } from '@ant-design/icons';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { dashboardAPI } from '../services/api';
@@ -213,7 +213,7 @@ const Dashboard = () => {
           <Card title="Research Items" size="small">
             <Statistic
               value={summary.total_research_items}
-              prefix={<TrendingUpOutlined />}
+              prefix={<RiseOutlined />}
               suffix="items"
             />
           </Card>
