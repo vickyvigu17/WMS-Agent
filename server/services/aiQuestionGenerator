@@ -1,0 +1,620 @@
+const axios = require('axios');
+
+class AIQuestionGenerator {
+  constructor() {
+    this.openaiApiKey = process.env.OPENAI_API_KEY;
+  }
+
+  async generateWMSQuestions(clientInfo, projectInfo, questionCategories = []) {
+    try {
+      if (this.openaiApiKey) {
+        return await this.generateWithLLM(clientInfo, projectInfo, questionCategories);
+      } else {
+        return this.getComprehensiveQuestionBank(clientInfo, projectInfo, questionCategories);
+      }
+    } catch (error) {
+      console.error('Question generation error:', error);
+      return this.getComprehensiveQuestionBank(clientInfo, projectInfo, questionCategories);
+    }
+  }
+
+  async generateWithLLM(clientInfo, projectInfo, categories) {
+    const prompt = `Generate comprehensive WMS implementation questions for:
+
+Client: ${clientInfo.name}
+Industry: ${clientInfo.industry}
+Company Size: ${clientInfo.company_size}
+Location: ${clientInfo.location}
+Project: ${projectInfo.name}
+
+Generate 40-50 questions across these categories:
+1. WMS Process Questions (Receiving, Put-away, Picking, Packing, Shipping, Inventory)
+2. Technical Questions (Integration, Hardware, Software, Data)
+3. Business Requirements (Performance, Scalability, Reporting)
+4. Client-Specific Questions (Industry-specific, Size-specific)
+5. Implementation Questions (Timeline, Resources, Training)
+
+Format each question as:
+{
+  "category": "category_name",
+  "subcategory": "specific_area",
+  "question": "question_text",
+  "priority": "high/medium/low",
+  "reasoning": "why_this_question_matters"
+}
+
+Make questions specific to ${clientInfo.industry} industry and ${clientInfo.company_size} companies.`;
+
+    try {
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a WMS implementation consultant expert. Generate detailed, industry-specific questions that help assess client requirements and implementation readiness.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.7
+      }, {
+        headers: {
+          'Authorization': `Bearer ${this.openaiApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const generatedText = response.data.choices[0].message.content;
+      return this.parseGeneratedQuestions(generatedText, clientInfo);
+    } catch (error) {
+      console.error('LLM question generation error:', error);
+      return this.getComprehensiveQuestionBank(clientInfo, projectInfo, categories);
+    }
+  }
+
+  parseGeneratedQuestions(generatedText, clientInfo) {
+    // Try to parse JSON from LLM response, fallback to comprehensive bank
+    try {
+      const questions = JSON.parse(generatedText);
+      return questions.map((q, index) => ({
+        id: Date.now() + index,
+        ...q,
+        answered: false,
+        created_at: new Date()
+      }));
+    } catch (error) {
+      return this.getComprehensiveQuestionBank(clientInfo, {}, []);
+    }
+  }
+
+  getComprehensiveQuestionBank(clientInfo, projectInfo, categories) {
+    const questionBank = {
+      // WMS PROCESS QUESTIONS
+      receiving: [
+        {
+          category: "WMS Process",
+          subcategory: "Receiving",
+          question: "What is your current daily receiving volume (number of receipts/SKUs)?",
+          priority: "high",
+          reasoning: "Critical for sizing receiving capacity and labor requirements"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Receiving",
+          question: "How do you currently handle advance shipment notifications (ASNs)?",
+          priority: "high",
+          reasoning: "ASN processing is fundamental to efficient receiving workflows"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Receiving",
+          question: "What types of receiving documentation do you use (BOL, packing lists, POs)?",
+          priority: "medium",
+          reasoning: "Document handling requirements affect system design"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Receiving",
+          question: "Do you perform quality inspections during receiving? What percentage?",
+          priority: "medium",
+          reasoning: "Quality workflows impact receiving process design"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Receiving",
+          question: "How do you handle discrepancies between expected and actual receipts?",
+          priority: "high",
+          reasoning: "Exception handling is critical for operational efficiency"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Receiving",
+          question: "What are your peak receiving hours and seasonal variations?",
+          priority: "medium",
+          reasoning: "Understanding volume patterns helps with capacity planning"
+        }
+      ],
+
+      putaway: [
+        {
+          category: "WMS Process",
+          subcategory: "Put-away",
+          question: "What put-away strategies do you currently use (random, fixed, zone-based)?",
+          priority: "high",
+          reasoning: "Put-away strategy directly impacts storage efficiency and picking performance"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Put-away",
+          question: "How do you determine optimal storage locations for received items?",
+          priority: "high",
+          reasoning: "Location optimization affects labor costs and inventory accessibility"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Put-away",
+          question: "Do you use directed or operator-directed put-away processes?",
+          priority: "medium",
+          reasoning: "Automation level affects system requirements and ROI"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Put-away",
+          question: "What product characteristics drive your storage decisions (ABC analysis, velocity, size)?",
+          priority: "high",
+          reasoning: "Product slotting logic is fundamental to warehouse efficiency"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Put-away",
+          question: "How do you handle storage of hazardous or special handling materials?",
+          priority: "medium",
+          reasoning: "Special storage requirements affect system design and compliance"
+        }
+      ],
+
+      picking: [
+        {
+          category: "WMS Process",
+          subcategory: "Picking",
+          question: "What picking methods do you currently use (piece, case, pallet, batch)?",
+          priority: "high",
+          reasoning: "Picking methods determine system functionality and performance metrics"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Picking",
+          question: "What is your current pick accuracy rate and target?",
+          priority: "high",
+          reasoning: "Accuracy requirements drive technology choices and validation processes"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Picking",
+          question: "How do you optimize pick paths and minimize travel time?",
+          priority: "high",
+          reasoning: "Path optimization is a key WMS value driver"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Picking",
+          question: "Do you use any pick validation technology (barcode, RFID, voice, light)?",
+          priority: "medium",
+          reasoning: "Validation technology affects accuracy and productivity"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Picking",
+          question: "How do you handle partial picks and backorders?",
+          priority: "medium",
+          reasoning: "Exception handling affects customer service and system complexity"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Picking",
+          question: "What are your peak picking periods and volume fluctuations?",
+          priority: "medium",
+          reasoning: "Volume patterns affect resource planning and system sizing"
+        }
+      ],
+
+      packing: [
+        {
+          category: "WMS Process",
+          subcategory: "Packing",
+          question: "What types of packaging do you use and how is packaging determined?",
+          priority: "medium",
+          reasoning: "Packaging logic affects system configuration and carrier requirements"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Packing",
+          question: "Do you use automated or manual packing processes?",
+          priority: "medium",
+          reasoning: "Automation level affects system integration requirements"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Packing",
+          question: "How do you handle gift wrapping, kitting, or value-added services?",
+          priority: "low",
+          reasoning: "Special services require specific system functionality"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Packing",
+          question: "What documentation is included with shipments (packing slips, invoices, inserts)?",
+          priority: "medium",
+          reasoning: "Document requirements affect system printing and workflow design"
+        }
+      ],
+
+      shipping: [
+        {
+          category: "WMS Process",
+          subcategory: "Shipping",
+          question: "Which carriers do you use and what are your shipping service requirements?",
+          priority: "high",
+          reasoning: "Carrier integration is essential for shipping operations"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Shipping",
+          question: "How do you manage shipping schedules and carrier pickups?",
+          priority: "medium",
+          reasoning: "Scheduling affects warehouse operations and customer service"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Shipping",
+          question: "What shipping documentation and labeling requirements do you have?",
+          priority: "high",
+          reasoning: "Documentation requirements drive system configuration"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Shipping",
+          question: "How do you handle expedited or special shipping requirements?",
+          priority: "medium",
+          reasoning: "Priority handling affects workflow design and customer service"
+        }
+      ],
+
+      inventory: [
+        {
+          category: "WMS Process",
+          subcategory: "Inventory Management",
+          question: "What is your current inventory accuracy rate and how is it measured?",
+          priority: "high",
+          reasoning: "Inventory accuracy is a fundamental WMS success metric"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Inventory Management",
+          question: "How frequently do you perform cycle counts and physical inventories?",
+          priority: "high",
+          reasoning: "Count frequency affects system design and operational procedures"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Inventory Management",
+          question: "How do you handle inventory adjustments and variance resolution?",
+          priority: "medium",
+          reasoning: "Adjustment procedures affect inventory control and accountability"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Inventory Management",
+          question: "What lot tracking or serialization requirements do you have?",
+          priority: "high",
+          reasoning: "Traceability requirements significantly impact system functionality"
+        },
+        {
+          category: "WMS Process",
+          subcategory: "Inventory Management",
+          question: "How do you manage expiration dates and FIFO/LIFO requirements?",
+          priority: "medium",
+          reasoning: "Product rotation rules affect picking logic and inventory management"
+        }
+      ],
+
+      // TECHNICAL QUESTIONS
+      technical: [
+        {
+          category: "Technical",
+          subcategory: "ERP Integration",
+          question: "What ERP system are you currently using and what version?",
+          priority: "high",
+          reasoning: "ERP integration is critical for data flow and system architecture"
+        },
+        {
+          category: "Technical",
+          subcategory: "ERP Integration",
+          question: "What data needs to be synchronized between WMS and ERP (real-time vs batch)?",
+          priority: "high",
+          reasoning: "Integration frequency affects system performance and data consistency"
+        },
+        {
+          category: "Technical",
+          subcategory: "Hardware",
+          question: "What mobile devices and scanners are you currently using?",
+          priority: "medium",
+          reasoning: "Hardware compatibility affects implementation cost and user adoption"
+        },
+        {
+          category: "Technical",
+          subcategory: "Hardware",
+          question: "What is your current network infrastructure (WiFi coverage, bandwidth)?",
+          priority: "high",
+          reasoning: "Network capability is essential for mobile WMS operations"
+        },
+        {
+          category: "Technical",
+          subcategory: "Data",
+          question: "How clean and standardized is your current item master data?",
+          priority: "high",
+          reasoning: "Data quality directly impacts implementation timeline and success"
+        },
+        {
+          category: "Technical",
+          subcategory: "Data",
+          question: "What historical data needs to be migrated to the new WMS?",
+          priority: "medium",
+          reasoning: "Data migration scope affects implementation timeline and cost"
+        },
+        {
+          category: "Technical",
+          subcategory: "Integration",
+          question: "What other systems need to integrate with the WMS (TMS, EDI, e-commerce)?",
+          priority: "high",
+          reasoning: "Integration complexity affects system architecture and timeline"
+        },
+        {
+          category: "Technical",
+          subcategory: "Security",
+          question: "What security and compliance requirements do you have?",
+          priority: "medium",
+          reasoning: "Security requirements affect system configuration and hosting options"
+        }
+      ],
+
+      // BUSINESS REQUIREMENTS
+      business: [
+        {
+          category: "Business Requirements",
+          subcategory: "Performance",
+          question: "What are your current order processing times and targets?",
+          priority: "high",
+          reasoning: "Performance targets drive system requirements and design decisions"
+        },
+        {
+          category: "Business Requirements",
+          subcategory: "Performance",
+          question: "What are your peak volume requirements (orders per hour/day)?",
+          priority: "high",
+          reasoning: "Volume requirements affect system sizing and architecture"
+        },
+        {
+          category: "Business Requirements",
+          subcategory: "Scalability",
+          question: "What is your expected growth over the next 3-5 years?",
+          priority: "high",
+          reasoning: "Growth projections affect system scalability requirements"
+        },
+        {
+          category: "Business Requirements",
+          subcategory: "Reporting",
+          question: "What key performance indicators (KPIs) do you need to track?",
+          priority: "medium",
+          reasoning: "Reporting requirements drive system functionality and dashboard design"
+        },
+        {
+          category: "Business Requirements",
+          subcategory: "Reporting",
+          question: "Who needs access to what types of reports and dashboards?",
+          priority: "medium",
+          reasoning: "User access requirements affect system security and interface design"
+        },
+        {
+          category: "Business Requirements",
+          subcategory: "Compliance",
+          question: "What regulatory or industry compliance requirements do you have?",
+          priority: "high",
+          reasoning: "Compliance requirements affect system functionality and validation"
+        }
+      ],
+
+      // IMPLEMENTATION QUESTIONS
+      implementation: [
+        {
+          category: "Implementation",
+          subcategory: "Timeline",
+          question: "What is your desired go-live timeline and any critical deadlines?",
+          priority: "high",
+          reasoning: "Timeline constraints affect implementation approach and resource allocation"
+        },
+        {
+          category: "Implementation",
+          subcategory: "Resources",
+          question: "Who will be your internal project team and what are their roles?",
+          priority: "high",
+          reasoning: "Internal resources affect project success and timeline"
+        },
+        {
+          category: "Implementation",
+          subcategory: "Training",
+          question: "How many users need training and what is their current technical skill level?",
+          priority: "medium",
+          reasoning: "Training requirements affect implementation timeline and cost"
+        },
+        {
+          category: "Implementation",
+          subcategory: "Testing",
+          question: "What testing environments and procedures do you require?",
+          priority: "medium",
+          reasoning: "Testing requirements affect implementation approach and timeline"
+        },
+        {
+          category: "Implementation",
+          subcategory: "Change Management",
+          question: "How do you typically handle organizational change and user adoption?",
+          priority: "medium",
+          reasoning: "Change management affects implementation success and user adoption"
+        }
+      ]
+    };
+
+    // Generate industry-specific questions
+    const industryQuestions = this.getIndustrySpecificQuestions(clientInfo.industry);
+    
+    // Generate company size-specific questions
+    const sizeQuestions = this.getCompanySizeSpecificQuestions(clientInfo.company_size);
+
+    // Combine all questions
+    let allQuestions = [];
+    Object.values(questionBank).forEach(categoryQuestions => {
+      allQuestions = allQuestions.concat(categoryQuestions);
+    });
+    
+    allQuestions = allQuestions.concat(industryQuestions, sizeQuestions);
+
+    // Add IDs and timestamps
+    return allQuestions.map((q, index) => ({
+      id: Date.now() + index,
+      ...q,
+      answered: false,
+      created_at: new Date()
+    }));
+  }
+
+  getIndustrySpecificQuestions(industry) {
+    const industryQuestions = {
+      'E-commerce': [
+        {
+          category: "Client-Specific",
+          subcategory: "E-commerce",
+          question: "What e-commerce platforms do you integrate with and what order volumes?",
+          priority: "high",
+          reasoning: "E-commerce integration is critical for order flow"
+        },
+        {
+          category: "Client-Specific",
+          subcategory: "E-commerce",
+          question: "How do you handle returns processing and restocking?",
+          priority: "high",
+          reasoning: "Returns are significant in e-commerce operations"
+        },
+        {
+          category: "Client-Specific",
+          subcategory: "E-commerce",
+          question: "What are your peak season volume multipliers (Black Friday, holidays)?",
+          priority: "high",
+          reasoning: "E-commerce has extreme seasonal variations"
+        }
+      ],
+      'Retail': [
+        {
+          category: "Client-Specific",
+          subcategory: "Retail",
+          question: "How many store locations do you service and what are their delivery requirements?",
+          priority: "high",
+          reasoning: "Store replenishment affects distribution patterns"
+        },
+        {
+          category: "Client-Specific",
+          subcategory: "Retail",
+          question: "Do you handle both case picks for stores and piece picks for e-commerce?",
+          priority: "high",
+          reasoning: "Mixed picking requirements affect system design"
+        }
+      ],
+      'Manufacturing': [
+        {
+          category: "Client-Specific",
+          subcategory: "Manufacturing",
+          question: "How do you manage raw materials vs finished goods inventory?",
+          priority: "high",
+          reasoning: "Manufacturing has complex inventory types and flows"
+        },
+        {
+          category: "Client-Specific",
+          subcategory: "Manufacturing",
+          question: "What production scheduling integration is required?",
+          priority: "high",
+          reasoning: "Manufacturing requires integration with production systems"
+        }
+      ],
+      'Healthcare': [
+        {
+          category: "Client-Specific",
+          subcategory: "Healthcare",
+          question: "What lot tracking and expiration date management requirements do you have?",
+          priority: "high",
+          reasoning: "Healthcare requires strict traceability and expiration management"
+        },
+        {
+          category: "Client-Specific",
+          subcategory: "Healthcare",
+          question: "Do you need cold chain or controlled temperature storage?",
+          priority: "high",
+          reasoning: "Temperature control is critical for many healthcare products"
+        }
+      ]
+    };
+
+    return industryQuestions[industry] || [];
+  }
+
+  getCompanySizeSpecificQuestions(companySize) {
+    const sizeQuestions = {
+      'Large': [
+        {
+          category: "Client-Specific",
+          subcategory: "Enterprise",
+          question: "How many distribution centers will implement WMS and in what phases?",
+          priority: "high",
+          reasoning: "Large companies often have multi-site implementations"
+        },
+        {
+          category: "Client-Specific",
+          subcategory: "Enterprise",
+          question: "What corporate standards and governance requirements must be met?",
+          priority: "medium",
+          reasoning: "Enterprise companies have strict standards and approval processes"
+        }
+      ],
+      'Medium': [
+        {
+          category: "Client-Specific",
+          subcategory: "Mid-Market",
+          question: "Do you plan to grow into additional facilities in the next 2-3 years?",
+          priority: "medium",
+          reasoning: "Growth planning affects system architecture and licensing"
+        }
+      ],
+      'Small': [
+        {
+          category: "Client-Specific",
+          subcategory: "Small Business",
+          question: "What is your budget range for WMS implementation and ongoing costs?",
+          priority: "high",
+          reasoning: "Budget constraints significantly affect solution options for small companies"
+        },
+        {
+          category: "Client-Specific",
+          subcategory: "Small Business",
+          question: "Do you have dedicated IT resources or need cloud-based solutions?",
+          priority: "high",
+          reasoning: "Small companies often lack IT resources for on-premise solutions"
+        }
+      ]
+    };
+
+    return sizeQuestions[companySize] || [];
+  }
+}
+
+module.exports = new AIQuestionGenerator();
