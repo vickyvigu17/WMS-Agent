@@ -187,8 +187,7 @@ const QuestionBank = () => {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [form] = Form.useForm();
 
-  // NEW: AI Generation State
-  const [isAIModalVisible, setIsAIModalVisible] = useState(false);
+  // AI Generation State
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState(null);
   const [aiForm] = Form.useForm();
@@ -307,12 +306,7 @@ const QuestionBank = () => {
     }
   };
 
-  // NEW: AI Generation Functions
-  const handleAIGenerate = () => {
-    aiForm.resetFields();
-    setGenerationResult(null);
-    setIsAIModalVisible(true);
-  };
+  // AI Generation Functions
 
   const generateAIQuestions = async () => {
     try {
@@ -366,14 +360,14 @@ const QuestionBank = () => {
       setIsGenerating(true);
       const values = await aiForm.validateFields();
       
-      // Generate for multiple categories
-      const selectedCategories = values.bulkCategories || Object.keys(categoryInfo);
+      // Generate for all categories
+      const selectedCategories = Object.keys(categoryInfo);
       
       const response = await axios.post('/api/question-bank/bulk-generate', {
         categories: selectedCategories,
         questionsPerCategory: values.questionsPerCategory || 3,
-        priority: values.priority,
-        complexity: values.complexity
+        priority: values.bulkPriority || 'Mixed',
+        complexity: values.bulkComplexity || 'Mixed'
       });
 
       if (response.data.success) {
@@ -517,64 +511,284 @@ const QuestionBank = () => {
     return Object.values(questions).flat().filter(q => q.ai_generated === true).length;
   };
 
-  const tabItems = Object.entries(categoryInfo).map(([key, info]) => ({
-    key,
-    label: (
-      <span style={{ fontSize: '14px' }}>
-        {info.icon}
-        <span style={{ marginLeft: 8 }}>{info.title}</span>
-        <Tag 
-          style={{ marginLeft: 8 }} 
-          color="blue"
-        >
-          {questions[key]?.length || 0}
-        </Tag>
-      </span>
-    ),
-    children: (
-      <div>
-        <div style={{ marginBottom: 16, padding: 12, background: '#f8fafc', borderRadius: 6 }}>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>{info.description}</p>
-        </div>
-        <Space style={{ marginBottom: 16 }}>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={handleAddQuestion}
-            className="modern-btn modern-btn-primary"
-          >
-            Add Question
-          </Button>
-          <Button 
-            type="default" 
-            icon={<RobotOutlined />} 
-            onClick={handleAIGenerate}
-            className="modern-btn"
-            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none' }}
-          >
-            AI Generate
-          </Button>
-        </Space>
-        <div>
-          {questions[key]?.map(question => renderQuestionCard(question, key))}
-          {(!questions[key] || questions[key].length === 0) && (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
-              <QuestionCircleOutlined style={{ fontSize: 48, marginBottom: 16 }} />
-              <p>No questions added yet for this category</p>
-              <Button 
-                type="primary" 
-                icon={<RobotOutlined />} 
-                onClick={handleAIGenerate}
-                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }}
-              >
-                Generate with AI
-              </Button>
-            </div>
-          )}
-        </div>
+  // AI Questions Tab Content
+  const renderAIQuestionsTab = () => (
+    <div>
+      <div style={{ marginBottom: 24, padding: 20, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 12, color: 'white', textAlign: 'center' }}>
+        <RobotOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+        <h3 style={{ color: 'white', margin: '0 0 8px 0' }}>AI-Powered Question Generation</h3>
+        <p style={{ margin: 0, opacity: 0.9 }}>Generate unlimited, context-specific WMS questions using advanced AI</p>
       </div>
-    )
-  }));
+
+      <Form form={aiForm} layout="vertical">
+        <Collapse defaultActiveKey={['1']} style={{ marginBottom: 16 }}>
+          <Panel header="Single Category Generation" key="1">
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="category"
+                  label="Select Category"
+                  rules={[{ required: true, message: 'Please select a category' }]}
+                >
+                  <Select placeholder="Choose a WMS category" size="large">
+                    {Object.entries(categoryInfo).map(([key, info]) => (
+                      <Option key={key} value={key}>
+                        {info.icon} {info.title}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="count"
+                  label="Number of Questions"
+                  initialValue={10}
+                >
+                  <Slider 
+                    min={5} 
+                    max={25} 
+                    marks={{ 5: '5', 10: '10', 15: '15', 20: '20', 25: '25' }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="priority"
+                  label="Priority Focus"
+                  initialValue="Mixed"
+                >
+                  <Radio.Group>
+                    <Radio.Button value="Mixed">Mixed</Radio.Button>
+                    <Radio.Button value="High">High</Radio.Button>
+                    <Radio.Button value="Medium">Medium</Radio.Button>
+                    <Radio.Button value="Low">Low</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="complexity"
+                  label="Complexity Level"
+                  initialValue="Mixed"
+                >
+                  <Radio.Group>
+                    <Radio.Button value="Mixed">Mixed</Radio.Button>
+                    <Radio.Button value="Basic">Basic</Radio.Button>
+                    <Radio.Button value="Advanced">Advanced</Radio.Button>
+                    <Radio.Button value="Expert">Expert</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Button 
+              type="primary" 
+              loading={isGenerating}
+              onClick={generateAIQuestions}
+              icon={<ThunderboltOutlined />}
+              size="large"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                border: 'none',
+                width: '100%',
+                height: '48px',
+                fontSize: '16px',
+                fontWeight: 500
+              }}
+            >
+              🤖 Generate AI Questions
+            </Button>
+          </Panel>
+
+          <Panel header="Bulk Generation (All Categories)" key="2">
+            <Form.Item
+              name="questionsPerCategory"
+              label="Questions per Category"
+              initialValue={3}
+            >
+              <Slider 
+                min={2} 
+                max={10} 
+                marks={{ 2: '2', 5: '5', 8: '8', 10: '10' }}
+              />
+            </Form.Item>
+
+            <Row gutter={16} style={{ marginBottom: 16 }}>
+              <Col span={12}>
+                <Form.Item
+                  name="bulkPriority"
+                  label="Priority Focus"
+                  initialValue="Mixed"
+                >
+                  <Radio.Group>
+                    <Radio.Button value="Mixed">Mixed</Radio.Button>
+                    <Radio.Button value="High">High</Radio.Button>
+                    <Radio.Button value="Medium">Medium</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="bulkComplexity"
+                  label="Complexity Level"
+                  initialValue="Mixed"
+                >
+                  <Radio.Group>
+                    <Radio.Button value="Mixed">Mixed</Radio.Button>
+                    <Radio.Button value="Basic">Basic</Radio.Button>
+                    <Radio.Button value="Advanced">Advanced</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Button 
+              type="primary" 
+              loading={isGenerating}
+              onClick={bulkGenerateQuestions}
+              icon={<ThunderboltOutlined />}
+              size="large"
+              style={{ 
+                background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
+                border: 'none',
+                width: '100%',
+                height: '48px',
+                fontSize: '16px',
+                fontWeight: 500
+              }}
+            >
+              🚀 Bulk Generate All Categories
+            </Button>
+          </Panel>
+        </Collapse>
+
+        {generationResult && (
+          <Card 
+            title={
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ThunderboltOutlined style={{ marginRight: 8, color: '#8b5cf6' }} />
+                Generated Questions Preview
+              </div>
+            } 
+            style={{ marginTop: 16 }}
+            className="modern-card"
+          >
+            <div style={{ marginBottom: 16 }}>
+              <Tag color="blue">Category: {categoryInfo[generationResult.category]?.title}</Tag>
+              <Tag color="green">Generated: {generationResult.count} questions</Tag>
+              {generationResult.ai_powered && <Tag color="purple">AI-Powered</Tag>}
+            </div>
+            
+            <div style={{ maxHeight: 400, overflowY: 'auto', marginBottom: 16 }}>
+              {generationResult.questions.map((question, index) => (
+                <div key={index} style={{ 
+                  padding: 16, 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: 8, 
+                  marginBottom: 12,
+                  background: '#f8fafc',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <p style={{ margin: 0, marginBottom: 8, fontSize: '14px', lineHeight: '1.5' }}>{question.text}</p>
+                  <Space>
+                    <Tag color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}>
+                      {question.priority} Priority
+                    </Tag>
+                    {question.focus_area && (
+                      <Tag color="purple">{question.focus_area}</Tag>
+                    )}
+                    {question.ai_generated && (
+                      <Tag color="cyan" icon={<RobotOutlined />}>AI Generated</Tag>
+                    )}
+                  </Space>
+                </div>
+              ))}
+            </div>
+
+            <Button 
+              type="primary" 
+              onClick={addGeneratedQuestions}
+              size="large"
+              style={{ 
+                width: '100%',
+                height: '48px',
+                fontSize: '16px',
+                fontWeight: 500,
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                border: 'none'
+              }}
+            >
+              ✅ Add All Generated Questions to Question Bank
+            </Button>
+          </Card>
+        )}
+      </Form>
+    </div>
+  );
+
+  const tabItems = [
+    // AI Questions Tab (First tab)
+    {
+      key: 'ai-questions',
+      label: (
+        <span style={{ fontSize: '14px' }}>
+          <RobotOutlined style={{ color: '#8b5cf6' }} />
+          <span style={{ marginLeft: 8 }}>AI Questions</span>
+          <Tag style={{ marginLeft: 8 }} color="purple">Generate</Tag>
+        </span>
+      ),
+      children: renderAIQuestionsTab()
+    },
+    // Regular category tabs
+    ...Object.entries(categoryInfo).map(([key, info]) => ({
+      key,
+      label: (
+        <span style={{ fontSize: '14px' }}>
+          {info.icon}
+          <span style={{ marginLeft: 8 }}>{info.title}</span>
+          <Tag 
+            style={{ marginLeft: 8 }} 
+            color="blue"
+          >
+            {questions[key]?.length || 0}
+          </Tag>
+        </span>
+      ),
+      children: (
+        <div>
+          <div style={{ marginBottom: 16, padding: 12, background: '#f8fafc', borderRadius: 6 }}>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>{info.description}</p>
+          </div>
+          <Space style={{ marginBottom: 16 }}>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={handleAddQuestion}
+              className="modern-btn modern-btn-primary"
+            >
+              Add Question
+            </Button>
+          </Space>
+          <div>
+            {questions[key]?.map(question => renderQuestionCard(question, key))}
+            {(!questions[key] || questions[key].length === 0) && (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
+                <QuestionCircleOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+                <p>No questions added yet for this category</p>
+                <p style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Go to the "AI Questions" tab to generate questions with AI
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }))
+  ];
 
   return (
     <div className="main-content fade-in">
@@ -644,29 +858,7 @@ const QuestionBank = () => {
         </Col>
       </Row>
 
-      {/* AI Generation Button */}
-      <Card className="modern-card" style={{ marginBottom: 24 }}>
-        <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <BulbOutlined style={{ fontSize: 32, color: '#8b5cf6', marginBottom: 16 }} />
-          <h3 style={{ margin: '0 0 8px 0', color: '#1e293b' }}>AI-Powered Question Generation</h3>
-          <p style={{ color: '#64748b', marginBottom: 16 }}>Generate unlimited, context-specific WMS questions using advanced AI</p>
-          <Button 
-            type="primary" 
-            size="large"
-            icon={<RobotOutlined />} 
-            onClick={handleAIGenerate}
-            style={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-              border: 'none',
-              height: '48px',
-              fontSize: '16px',
-              fontWeight: 500
-            }}
-          >
-            Generate Questions with AI
-          </Button>
-        </div>
-      </Card>
+
 
       {/* Question Categories */}
       <Card className="modern-card" style={{ minHeight: '60vh' }}>
@@ -728,180 +920,7 @@ const QuestionBank = () => {
         </Form>
       </Modal>
 
-      {/* AI Generation Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <RobotOutlined style={{ marginRight: 8, color: '#8b5cf6' }} />
-            AI Question Generator
-          </div>
-        }
-        open={isAIModalVisible}
-        onCancel={() => setIsAIModalVisible(false)}
-        width={700}
-        className="modern-modal"
-        footer={null}
-      >
-        <div style={{ marginTop: 16 }}>
-          <Alert
-            message="AI-Powered Question Generation"
-            description="Generate unlimited, context-specific WMS questions using OpenAI. Customize parameters to get exactly the questions you need."
-            type="info"
-            icon={<BulbOutlined />}
-            style={{ marginBottom: 24 }}
-          />
 
-          <Form form={aiForm} layout="vertical">
-            <Collapse defaultActiveKey={['1']} style={{ marginBottom: 24 }}>
-              <Panel header="Single Category Generation" key="1">
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="category"
-                      label="Category"
-                      rules={[{ required: true, message: 'Please select a category' }]}
-                    >
-                      <Select placeholder="Select category" size="large">
-                        {Object.entries(categoryInfo).map(([key, info]) => (
-                          <Option key={key} value={key}>
-                            {info.icon} {info.title}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="count"
-                      label="Number of Questions"
-                      initialValue={10}
-                    >
-                      <Slider 
-                        min={5} 
-                        max={25} 
-                        marks={{ 5: '5', 10: '10', 15: '15', 20: '20', 25: '25' }}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="priority"
-                      label="Priority Distribution"
-                      initialValue="Mixed"
-                    >
-                      <Radio.Group>
-                        <Radio.Button value="Mixed">Mixed</Radio.Button>
-                        <Radio.Button value="High">High</Radio.Button>
-                        <Radio.Button value="Medium">Medium</Radio.Button>
-                        <Radio.Button value="Low">Low</Radio.Button>
-                      </Radio.Group>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="complexity"
-                      label="Complexity Level"
-                      initialValue="Mixed"
-                    >
-                      <Radio.Group>
-                        <Radio.Button value="Mixed">Mixed</Radio.Button>
-                        <Radio.Button value="Basic">Basic</Radio.Button>
-                        <Radio.Button value="Advanced">Advanced</Radio.Button>
-                        <Radio.Button value="Expert">Expert</Radio.Button>
-                      </Radio.Group>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Button 
-                  type="primary" 
-                  loading={isGenerating}
-                  onClick={generateAIQuestions}
-                  icon={<ThunderboltOutlined />}
-                  style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                    border: 'none',
-                    width: '100%',
-                    height: '40px'
-                  }}
-                >
-                  Generate Questions
-                </Button>
-              </Panel>
-
-              <Panel header="Bulk Generation (All Categories)" key="2">
-                <Form.Item
-                  name="questionsPerCategory"
-                  label="Questions per Category"
-                  initialValue={3}
-                >
-                  <Slider 
-                    min={2} 
-                    max={10} 
-                    marks={{ 2: '2', 5: '5', 8: '8', 10: '10' }}
-                  />
-                </Form.Item>
-
-                <Button 
-                  type="primary" 
-                  loading={isGenerating}
-                  onClick={bulkGenerateQuestions}
-                  icon={<ThunderboltOutlined />}
-                  style={{ 
-                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
-                    border: 'none',
-                    width: '100%',
-                    height: '40px'
-                  }}
-                >
-                  Bulk Generate All Categories
-                </Button>
-              </Panel>
-            </Collapse>
-
-            {generationResult && (
-              <Card title="Generated Questions" style={{ marginTop: 16 }}>
-                <div style={{ marginBottom: 16 }}>
-                  <Tag color="blue">Category: {categoryInfo[generationResult.category]?.title}</Tag>
-                  <Tag color="green">Generated: {generationResult.count} questions</Tag>
-                  {generationResult.ai_powered && <Tag color="purple">AI-Powered</Tag>}
-                </div>
-                
-                <div style={{ maxHeight: 300, overflowY: 'auto', marginBottom: 16 }}>
-                  {generationResult.questions.map((question, index) => (
-                    <div key={index} style={{ 
-                      padding: 12, 
-                      border: '1px solid #e2e8f0', 
-                      borderRadius: 6, 
-                      marginBottom: 8,
-                      background: '#f8fafc'
-                    }}>
-                      <p style={{ margin: 0, marginBottom: 8 }}>{question.text}</p>
-                      <Tag color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}>
-                        {question.priority}
-                      </Tag>
-                      {question.focus_area && (
-                        <Tag color="purple">{question.focus_area}</Tag>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <Button 
-                  type="primary" 
-                  onClick={addGeneratedQuestions}
-                  style={{ width: '100%' }}
-                >
-                  Add All Generated Questions to Question Bank
-                </Button>
-              </Card>
-            )}
-          </Form>
-        </div>
-      </Modal>
     </div>
   );
 };
