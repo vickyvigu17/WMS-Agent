@@ -180,3 +180,22 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* LAYOUT FIX */
+.ant-layout-sider.modern-sidebar {
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 280px !important;
+  z-index: 1000 !important;
+}
+
+.ant-layout-header.modern-header {
+  margin-left: 280px !important;
+  width: calc(100% - 280px) !important;
+}
+
+.ant-layout-content.app-content {
+  margin-left: 280px !important;
+  padding-top: 0 !important;
+}
