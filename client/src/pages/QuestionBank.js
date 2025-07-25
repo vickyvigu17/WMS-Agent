@@ -1,334 +1,120 @@
 import React, { useState } from 'react';
 import { 
   Card, Tabs, Button, Modal, Form, Input, Select, message, Tag, Space, Popconfirm, Row, Col, 
-  Spin, Alert, Collapse, Slider, Radio, Switch, Divider
+  Alert, Slider, Radio
 } from 'antd';
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined, 
-  InboxOutlined, SendOutlined, ApiOutlined, SettingOutlined, UserOutlined,
-  DatabaseOutlined, TruckOutlined, ScanOutlined, SafetyOutlined, TeamOutlined,
-  DashboardOutlined, ClockCircleOutlined, ShoppingCartOutlined, FileTextOutlined,
-  ToolOutlined, CloudOutlined, MobileOutlined, BarChartOutlined, RobotOutlined,
-  ThunderboltOutlined, BulbOutlined
+  RobotOutlined, ThunderboltOutlined, InboxOutlined, DatabaseOutlined,
+  ScanOutlined, ShoppingCartOutlined, TruckOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Option } = Select;
 const { TextArea } = Input;
-const { Panel } = Collapse;
 
 const QuestionBank = () => {
   const [questions, setQuestions] = useState({
-    // INBOUND OPERATIONS
     receiving: [
-      { id: 1, text: "What is your current receiving process flow from truck arrival to inventory confirmation?", priority: "High", category: "receiving" },
-      { id: 2, text: "How do you handle advance shipping notices (ASN) and what information do you require?", priority: "High", category: "receiving" },
-      { id: 3, text: "What are your dock door management requirements and scheduling processes?", priority: "Medium", category: "receiving" },
-      { id: 4, text: "How do you manage appointment scheduling for inbound deliveries?", priority: "Medium", category: "receiving" },
-      { id: 5, text: "What quality control checks are performed during receiving?", priority: "High", category: "receiving" },
-      { id: 6, text: "How do you handle discrepancies in quantity, quality, or documentation?", priority: "High", category: "receiving" },
-      { id: 7, text: "What are your requirements for cross-docking operations?", priority: "Medium", category: "receiving" },
-      { id: 8, text: "How do you manage returns processing and reverse logistics?", priority: "Medium", category: "receiving" }
+      { id: 1, text: "What is your current receiving process flow?", priority: "High", category: "receiving" },
+      { id: 2, text: "How do you handle advance shipping notices?", priority: "High", category: "receiving" }
     ],
-    putaway: [
-      { id: 9, text: "What putaway strategies do you currently use (FIFO, LIFO, location-based)?", priority: "High", category: "putaway" },
-      { id: 10, text: "How do you determine optimal storage locations for different product types?", priority: "High", category: "putaway" },
-      { id: 11, text: "What are your requirements for directed putaway vs. random putaway?", priority: "Medium", category: "putaway" },
-      { id: 12, text: "How do you handle putaway for hazardous or special handling materials?", priority: "High", category: "putaway" },
-      { id: 13, text: "What slotting optimization requirements do you have?", priority: "Medium", category: "putaway" },
-      { id: 14, text: "How do you manage putaway task prioritization and sequencing?", priority: "Medium", category: "putaway" }
-    ],
-    
-    // INVENTORY MANAGEMENT
     inventory: [
-      { id: 15, text: "What inventory tracking methods do you currently use (lot, serial, batch)?", priority: "High", category: "inventory" },
-      { id: 16, text: "How frequently do you perform cycle counts and full physical inventories?", priority: "High", category: "inventory" },
-      { id: 17, text: "What are your requirements for real-time inventory visibility?", priority: "High", category: "inventory" },
-      { id: 18, text: "How do you manage inventory adjustments and variance reporting?", priority: "Medium", category: "inventory" },
-      { id: 19, text: "What ABC analysis and inventory classification do you require?", priority: "Medium", category: "inventory" },
-      { id: 20, text: "How do you handle expiration date tracking and FEFO management?", priority: "High", category: "inventory" },
-      { id: 21, text: "What are your requirements for inventory reservations and allocations?", priority: "Medium", category: "inventory" },
-      { id: 22, text: "How do you manage safety stock levels and reorder points?", priority: "Medium", category: "inventory" }
+      { id: 3, text: "What inventory tracking methods do you use?", priority: "High", category: "inventory" },
+      { id: 4, text: "How frequently do you perform cycle counts?", priority: "Medium", category: "inventory" }
     ],
-    
-    // OUTBOUND OPERATIONS
     picking: [
-      { id: 23, text: "What picking methods do you currently use (discrete, batch, wave, zone)?", priority: "High", category: "picking" },
-      { id: 24, text: "How do you optimize pick paths and travel time in the warehouse?", priority: "High", category: "picking" },
-      { id: 25, text: "What are your requirements for pick task prioritization?", priority: "Medium", category: "picking" },
-      { id: 26, text: "How do you handle short picks and back-order management?", priority: "High", category: "picking" },
-      { id: 27, text: "What validation methods do you use to ensure pick accuracy?", priority: "High", category: "picking" },
-      { id: 28, text: "How do you manage pick list generation and wave planning?", priority: "Medium", category: "picking" },
-      { id: 29, text: "What are your requirements for voice, RF, or pick-to-light systems?", priority: "Medium", category: "picking" }
-    ],
-    packing: [
-      { id: 30, text: "What packing strategies and cartonization rules do you require?", priority: "High", category: "packing" },
-      { id: 31, text: "How do you determine optimal box sizes and packaging materials?", priority: "Medium", category: "packing" },
-      { id: 32, text: "What are your requirements for pack verification and quality control?", priority: "High", category: "packing" },
-      { id: 33, text: "How do you handle special packaging requirements (fragile, hazmat, etc.)?", priority: "High", category: "packing" },
-      { id: 34, text: "What labeling requirements do you have for packages?", priority: "Medium", category: "packing" },
-      { id: 35, text: "How do you manage packing productivity and performance metrics?", priority: "Medium", category: "packing" }
-    ],
-    shipping: [
-      { id: 36, text: "What shipping carrier management and rate shopping requirements do you have?", priority: "High", category: "shipping" },
-      { id: 37, text: "How do you handle multi-carrier shipping and carrier selection rules?", priority: "Medium", category: "shipping" },
-      { id: 38, text: "What are your requirements for shipment tracking and visibility?", priority: "High", category: "shipping" },
-      { id: 39, text: "How do you manage freight audit and payment processes?", priority: "Medium", category: "shipping" },
-      { id: 40, text: "What documentation requirements do you have for international shipping?", priority: "Medium", category: "shipping" },
-      { id: 41, text: "How do you handle shipment consolidation and LTL optimization?", priority: "Medium", category: "shipping" }
-    ],
-    
-    // YARD MANAGEMENT
-    yard: [
-      { id: 42, text: "What yard management capabilities do you require for trailer tracking?", priority: "Medium", category: "yard" },
-      { id: 43, text: "How do you manage dock door assignments and scheduling?", priority: "Medium", category: "yard" },
-      { id: 44, text: "What are your requirements for yard jockey and equipment management?", priority: "Low", category: "yard" },
-      { id: 45, text: "How do you handle detention and demurrage tracking?", priority: "Medium", category: "yard" },
-      { id: 46, text: "What visibility do you need into yard activities and trailer status?", priority: "Medium", category: "yard" }
-    ],
-    
-    // LABOR MANAGEMENT
-    labor: [
-      { id: 47, text: "What labor management and workforce planning capabilities do you need?", priority: "Medium", category: "labor" },
-      { id: 48, text: "How do you track labor productivity and performance metrics?", priority: "Medium", category: "labor" },
-      { id: 49, text: "What are your requirements for task interleaving and optimization?", priority: "Low", category: "labor" },
-      { id: 50, text: "How do you manage labor standards and engineered time studies?", priority: "Medium", category: "labor" },
-      { id: 51, text: "What incentive programs and performance tracking do you require?", priority: "Low", category: "labor" }
-    ],
-    
-    // WAREHOUSE CONFIGURATION
-    configuration: [
-      { id: 52, text: "How do you want to configure warehouse zones and storage areas?", priority: "High", category: "configuration" },
-      { id: 53, text: "What location labeling and addressing scheme do you prefer?", priority: "High", category: "configuration" },
-      { id: 54, text: "How should the system handle different storage types (bulk, rack, floor)?", priority: "High", category: "configuration" },
-      { id: 55, text: "What equipment types and capacities need to be configured?", priority: "Medium", category: "configuration" },
-      { id: 56, text: "How do you want to set up user roles and permissions?", priority: "High", category: "configuration" },
-      { id: 57, text: "What business rules and workflows need to be configured?", priority: "Medium", category: "configuration" }
-    ],
-    
-    // TECHNOLOGY & INTEGRATION
-    technology: [
-      { id: 58, text: "What ERP system do you use and what integration points are required?", priority: "High", category: "technology" },
-      { id: 59, text: "What other systems need to integrate with the WMS (TMS, OMS, etc.)?", priority: "High", category: "technology" },
-      { id: 60, text: "What are your requirements for real-time vs. batch data integration?", priority: "Medium", category: "technology" },
-      { id: 61, text: "How do you want to handle master data synchronization?", priority: "High", category: "technology" },
-      { id: 62, text: "What API requirements and data formats do you prefer?", priority: "Medium", category: "technology" },
-      { id: 63, text: "What are your cybersecurity and data protection requirements?", priority: "High", category: "technology" }
-    ],
-    automation: [
-      { id: 64, text: "What warehouse automation equipment do you currently have or plan to implement?", priority: "Medium", category: "automation" },
-      { id: 65, text: "How should the WMS integrate with conveyor systems and sortation equipment?", priority: "Medium", category: "automation" },
-      { id: 66, text: "What are your requirements for robotic integration (AMR, AGV)?", priority: "Low", category: "automation" },
-      { id: 67, text: "How do you want to handle automated storage and retrieval systems (AS/RS)?", priority: "Low", category: "automation" },
-      { id: 68, text: "What pick-to-light or put-to-light system integration is needed?", priority: "Low", category: "automation" }
-    ],
-    mobile: [
-      { id: 69, text: "What mobile device requirements do you have (RF guns, tablets, smartphones)?", priority: "High", category: "mobile" },
-      { id: 70, text: "How should the mobile interface be designed for warehouse operations?", priority: "High", category: "mobile" },
-      { id: 71, text: "What offline capabilities are required for mobile devices?", priority: "Medium", category: "mobile" },
-      { id: 72, text: "How do you want to handle device management and maintenance?", priority: "Medium", category: "mobile" },
-      { id: 73, text: "What barcode scanning and RFID requirements do you have?", priority: "High", category: "mobile" }
-    ],
-    
-    // REPORTING & ANALYTICS
-    reporting: [
-      { id: 74, text: "What key performance indicators (KPIs) do you need to track?", priority: "High", category: "reporting" },
-      { id: 75, text: "What standard reports do you require for daily operations?", priority: "High", category: "reporting" },
-      { id: 76, text: "How do you want to handle executive dashboards and real-time monitoring?", priority: "Medium", category: "reporting" },
-      { id: 77, text: "What ad-hoc reporting and data export capabilities do you need?", priority: "Medium", category: "reporting" },
-      { id: 78, text: "How should the system handle historical data retention and archiving?", priority: "Medium", category: "reporting" },
-      { id: 79, text: "What business intelligence and analytics tools integration is required?", priority: "Low", category: "reporting" }
-    ],
-    
-    // COMPLIANCE & QUALITY
-    compliance: [
-      { id: 80, text: "What regulatory compliance requirements do you have (FDA, DOT, etc.)?", priority: "High", category: "compliance" },
-      { id: 81, text: "How do you need to handle lot traceability and recall management?", priority: "High", category: "compliance" },
-      { id: 82, text: "What quality control and inspection processes need to be supported?", priority: "High", category: "compliance" },
-      { id: 83, text: "How should the system handle audit trails and documentation?", priority: "Medium", category: "compliance" },
-      { id: 84, text: "What are your requirements for chain of custody tracking?", priority: "Medium", category: "compliance" },
-      { id: 85, text: "How do you handle temperature monitoring and cold chain management?", priority: "Medium", category: "compliance" }
-    ],
-    
-    // BUSINESS PROCESSES
-    orders: [
-      { id: 86, text: "How do you want to handle order prioritization and allocation rules?", priority: "High", category: "orders" },
-      { id: 87, text: "What are your requirements for order splitting and consolidation?", priority: "Medium", category: "orders" },
-      { id: 88, text: "How should the system handle rush orders and expedited processing?", priority: "Medium", category: "orders" },
-      { id: 89, text: "What order modification and cancellation processes do you need?", priority: "Medium", category: "orders" },
-      { id: 90, text: "How do you want to manage customer-specific requirements and SLAs?", priority: "Medium", category: "orders" }
-    ],
-    returns: [
-      { id: 91, text: "What is your returns processing workflow and disposition rules?", priority: "High", category: "returns" },
-      { id: 92, text: "How do you handle different return reasons and restocking processes?", priority: "Medium", category: "returns" },
-      { id: 93, text: "What are your requirements for return merchandise authorization (RMA)?", priority: "Medium", category: "returns" },
-      { id: 94, text: "How should the system handle refurbishment and repair processes?", priority: "Low", category: "returns" },
-      { id: 95, text: "What customer communication is required during returns processing?", priority: "Medium", category: "returns" }
-    ],
-    
-    // IMPLEMENTATION & SUPPORT
-    implementation: [
-      { id: 96, text: "What is your preferred implementation timeline and go-live strategy?", priority: "High", category: "implementation" },
-      { id: 97, text: "How do you want to handle data migration from legacy systems?", priority: "High", category: "implementation" },
-      { id: 98, text: "What training requirements do you have for different user groups?", priority: "High", category: "implementation" },
-      { id: 99, text: "How should we approach testing and user acceptance processes?", priority: "High", category: "implementation" },
-      { id: 100, text: "What change management and communication strategy do you prefer?", priority: "Medium", category: "implementation" }
-    ],
-    support: [
-      { id: 101, text: "What ongoing support and maintenance requirements do you have?", priority: "Medium", category: "support" },
-      { id: 102, text: "How do you want to handle system upgrades and enhancements?", priority: "Medium", category: "support" },
-      { id: 103, text: "What service level agreements (SLAs) do you require for support?", priority: "Medium", category: "support" },
-      { id: 104, text: "How should we handle escalation procedures and critical issues?", priority: "Medium", category: "support" },
-      { id: 105, text: "What documentation and knowledge transfer requirements do you have?", priority: "Medium", category: "support" }
+      { id: 5, text: "What picking methods do you currently use?", priority: "High", category: "picking" },
+      { id: 6, text: "How do you optimize pick paths?", priority: "Medium", category: "picking" }
     ]
   });
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [form] = Form.useForm();
-
+  
   // AI Generation State
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState(null);
   const [aiForm] = Form.useForm();
 
   const categoryInfo = {
-    // INBOUND OPERATIONS
     receiving: { 
       title: "Receiving Operations", 
       icon: <InboxOutlined />, 
       description: "Inbound delivery processing, dock management, quality control" 
     },
-    putaway: { 
-      title: "Putaway Management", 
-      icon: <DatabaseOutlined />, 
-      description: "Storage location assignment, putaway strategies, slotting optimization" 
-    },
-    
-    // INVENTORY MANAGEMENT
     inventory: { 
       title: "Inventory Control", 
-      icon: <BarChartOutlined />, 
+      icon: <DatabaseOutlined />, 
       description: "Stock tracking, cycle counting, inventory accuracy, ABC analysis" 
     },
-    
-    // OUTBOUND OPERATIONS
     picking: { 
       title: "Order Picking", 
       icon: <ScanOutlined />, 
       description: "Pick strategies, path optimization, task management, accuracy validation" 
-    },
-    packing: { 
-      title: "Packing Operations", 
-      icon: <ShoppingCartOutlined />, 
-      description: "Cartonization, packaging strategies, pack verification, labeling" 
-    },
-    shipping: { 
-      title: "Shipping Management", 
-      icon: <TruckOutlined />, 
-      description: "Carrier management, rate shopping, shipment tracking, documentation" 
-    },
-    
-    // YARD MANAGEMENT
-    yard: { 
-      title: "Yard Management", 
-      icon: <SafetyOutlined />, 
-      description: "Trailer tracking, dock scheduling, yard operations, detention tracking" 
-    },
-    
-    // LABOR MANAGEMENT
-    labor: { 
-      title: "Labor Management", 
-      icon: <TeamOutlined />, 
-      description: "Workforce planning, productivity tracking, performance metrics, incentives" 
-    },
-    
-    // WAREHOUSE CONFIGURATION
-    configuration: { 
-      title: "System Configuration", 
-      icon: <SettingOutlined />, 
-      description: "Warehouse setup, zones, locations, storage types, business rules" 
-    },
-    
-    // TECHNOLOGY & INTEGRATION
-    technology: { 
-      title: "Technology Integration", 
-      icon: <ApiOutlined />, 
-      description: "ERP integration, system interfaces, APIs, data synchronization" 
-    },
-    automation: { 
-      title: "Warehouse Automation", 
-      icon: <ToolOutlined />, 
-      description: "Conveyor systems, robotics, AS/RS, automated equipment integration" 
-    },
-    mobile: { 
-      title: "Mobile Technology", 
-      icon: <MobileOutlined />, 
-      description: "RF devices, mobile interfaces, barcode scanning, offline capabilities" 
-    },
-    
-    // REPORTING & ANALYTICS
-    reporting: { 
-      title: "Reporting & Analytics", 
-      icon: <DashboardOutlined />, 
-      description: "KPIs, dashboards, standard reports, business intelligence" 
-    },
-    
-    // COMPLIANCE & QUALITY
-    compliance: { 
-      title: "Compliance & Quality", 
-      icon: <SafetyOutlined />, 
-      description: "Regulatory compliance, lot traceability, quality control, audit trails" 
-    },
-    
-    // BUSINESS PROCESSES
-    orders: { 
-      title: "Order Management", 
-      icon: <FileTextOutlined />, 
-      description: "Order processing, prioritization, allocation, customer requirements" 
-    },
-    returns: { 
-      title: "Returns Processing", 
-      icon: <ClockCircleOutlined />, 
-      description: "Return workflows, RMA processing, disposition rules, refurbishment" 
-    },
-    
-    // IMPLEMENTATION & SUPPORT
-    implementation: { 
-      title: "Implementation Planning", 
-      icon: <UserOutlined />, 
-      description: "Go-live strategy, data migration, training, testing, change management" 
-    },
-    support: { 
-      title: "Support & Maintenance", 
-      icon: <CloudOutlined />, 
-      description: "Ongoing support, SLAs, upgrades, documentation, knowledge transfer" 
     }
   };
 
   // AI Generation Functions
-
   const generateAIQuestions = async () => {
     try {
       setIsGenerating(true);
       const values = await aiForm.validateFields();
       
+      console.log('🤖 Calling AI generation API with:', values);
+      
       const response = await axios.post('/api/question-bank/generate', {
         category: values.category,
-        count: values.count,
-        priority: values.priority,
-        complexity: values.complexity
+        count: values.count || 10,
+        priority: values.priority || 'Mixed',
+        complexity: values.complexity || 'Mixed'
       });
 
       if (response.data.success) {
         setGenerationResult(response.data);
-        message.success(`Generated ${response.data.count} AI-powered questions!`);
+        message.success(`🎉 Generated ${response.data.count} AI questions!`);
       } else {
         message.error('Failed to generate questions');
       }
     } catch (error) {
-      console.error('AI generation error:', error);
+      console.error('❌ AI generation error:', error);
       message.error(error.response?.data?.message || 'Failed to generate AI questions');
+      
+      // Show fallback demo questions
+      const demoQuestions = [
+        {
+          id: Date.now(),
+          text: `What are your ${values.category || 'warehouse'} automation requirements?`,
+          priority: 'High',
+          category: values.category || 'general',
+          ai_generated: true
+        },
+        {
+          id: Date.now() + 1,
+          text: `How do you handle ${values.category || 'inventory'} exceptions and errors?`,
+          priority: 'Medium', 
+          category: values.category || 'general',
+          ai_generated: true
+        },
+        {
+          id: Date.now() + 2,
+          text: `What integration requirements do you have for ${values.category || 'system'}?`,
+          priority: 'High',
+          category: values.category || 'general', 
+          ai_generated: true
+        }
+      ];
+      
+      setGenerationResult({
+        success: true,
+        questions: demoQuestions,
+        count: demoQuestions.length,
+        category: values.category || 'general',
+        ai_powered: false
+      });
+      
+      message.info('🤖 Showing demo AI questions (API not available)');
     } finally {
       setIsGenerating(false);
     }
@@ -349,54 +135,9 @@ const QuestionBank = () => {
         ]
       }));
       
-      setIsAIModalVisible(false);
+      message.success(`✅ Added ${generationResult.questions.length} questions to ${categoryInfo[category]?.title || category}`);
       setGenerationResult(null);
-      message.success(`Added ${generationResult.questions.length} AI-generated questions to ${categoryInfo[category]?.title}`);
-    }
-  };
-
-  const bulkGenerateQuestions = async () => {
-    try {
-      setIsGenerating(true);
-      const values = await aiForm.validateFields();
-      
-      // Generate for all categories
-      const selectedCategories = Object.keys(categoryInfo);
-      
-      const response = await axios.post('/api/question-bank/bulk-generate', {
-        categories: selectedCategories,
-        questionsPerCategory: values.questionsPerCategory || 3,
-        priority: values.bulkPriority || 'Mixed',
-        complexity: values.bulkComplexity || 'Mixed'
-      });
-
-      if (response.data.success) {
-        // Add all generated questions to state
-        const newQuestions = { ...questions };
-        
-        Object.entries(response.data.results).forEach(([category, result]) => {
-          if (result.success && result.questions) {
-            newQuestions[category] = [
-              ...(newQuestions[category] || []),
-              ...result.questions.map(q => ({
-                ...q,
-                id: Math.max(...Object.values(newQuestions).flat().map(q => q.id || 0)) + Math.random()
-              }))
-            ];
-          }
-        });
-        
-        setQuestions(newQuestions);
-        setIsAIModalVisible(false);
-        message.success(`Bulk generated ${response.data.totalQuestions} questions across ${response.data.categoriesProcessed} categories!`);
-      } else {
-        message.error('Failed to bulk generate questions');
-      }
-    } catch (error) {
-      console.error('Bulk generation error:', error);
-      message.error(error.response?.data?.message || 'Failed to bulk generate questions');
-    } finally {
-      setIsGenerating(false);
+      aiForm.resetFields();
     }
   };
 
@@ -408,11 +149,7 @@ const QuestionBank = () => {
 
   const handleEditQuestion = (question) => {
     setEditingQuestion(question);
-    form.setFieldsValue({
-      text: question.text,
-      priority: question.priority,
-      category: question.category
-    });
+    form.setFieldsValue(question);
     setIsModalVisible(true);
   };
 
@@ -424,283 +161,225 @@ const QuestionBank = () => {
     message.success('Question deleted successfully');
   };
 
-  const handleModalOk = () => {
-    form.validateFields().then(values => {
-      const { text, priority, category } = values;
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
       
       if (editingQuestion) {
         // Edit existing question
         setQuestions(prev => ({
           ...prev,
-          [category]: prev[category].map(q => 
-            q.id === editingQuestion.id ? { ...q, text, priority, category } : q
+          [values.category]: prev[values.category].map(q => 
+            q.id === editingQuestion.id ? { ...q, ...values } : q
           )
         }));
         message.success('Question updated successfully');
       } else {
         // Add new question
         const newQuestion = {
-          id: Math.max(...Object.values(questions).flat().map(q => q.id)) + 1,
-          text,
-          priority,
-          category
+          id: Math.max(...Object.values(questions).flat().map(q => q.id || 0)) + 1,
+          ...values
         };
+        
         setQuestions(prev => ({
           ...prev,
-          [category]: [...(prev[category] || []), newQuestion]
+          [values.category]: [...(prev[values.category] || []), newQuestion]
         }));
         message.success('Question added successfully');
       }
       
       setIsModalVisible(false);
       form.resetFields();
-    });
+    } catch (error) {
+      console.error('Form validation failed:', error);
+    }
   };
 
   const renderQuestionCard = (question, category) => (
-    <Card 
+    <Card
       key={question.id}
-      size="small" 
-      className="question-card"
+      size="small"
+      className="modern-card"
       style={{ marginBottom: 12 }}
+      actions={[
+        <EditOutlined key="edit" onClick={() => handleEditQuestion(question)} />,
+        <Popconfirm
+          title="Are you sure you want to delete this question?"
+          onConfirm={() => handleDeleteQuestion(question.id, category)}
+          okText="Yes"
+          cancelText="No"
+        >
+          <DeleteOutlined key="delete" />
+        </Popconfirm>
+      ]}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, marginRight: 16 }}>
-          <p style={{ margin: 0, lineHeight: '1.4' }}>{question.text}</p>
-          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-            <Tag 
-              color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}
-            >
-              {question.priority} Priority
-            </Tag>
-            {question.ai_generated && (
-              <Tag color="purple" icon={<RobotOutlined />}>
-                AI Generated
-              </Tag>
-            )}
-          </div>
-        </div>
-        <Space>
-          <Button 
-            size="small" 
-            icon={<EditOutlined />} 
-            onClick={() => handleEditQuestion(question)}
-          />
-          <Popconfirm
-            title="Are you sure you want to delete this question?"
-            onConfirm={() => handleDeleteQuestion(question.id, category)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button size="small" icon={<DeleteOutlined />} danger />
-          </Popconfirm>
-        </Space>
+      <div style={{ marginBottom: 8 }}>
+        <Tag color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}>
+          {question.priority}
+        </Tag>
+        {question.ai_generated && (
+          <Tag color="purple" icon={<RobotOutlined />}>AI Generated</Tag>
+        )}
       </div>
+      <p style={{ margin: 0, fontSize: '14px' }}>{question.text}</p>
     </Card>
   );
 
-  const getTotalQuestions = () => {
-    return Object.values(questions).reduce((total, categoryQuestions) => total + categoryQuestions.length, 0);
-  };
-
-  const getQuestionsByPriority = (priority) => {
-    return Object.values(questions).flat().filter(q => q.priority === priority).length;
-  };
-
-  const getAIGeneratedCount = () => {
-    return Object.values(questions).flat().filter(q => q.ai_generated === true).length;
-  };
-
-  // AI Questions Tab Content
+  // AI Questions Tab Content - VERY OBVIOUS AND SIMPLE
   const renderAIQuestionsTab = () => (
-    <div>
-      <div style={{ marginBottom: 24, padding: 20, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 12, color: 'white', textAlign: 'center' }}>
-        <RobotOutlined style={{ fontSize: 48, marginBottom: 16 }} />
-        <h3 style={{ color: 'white', margin: '0 0 8px 0' }}>AI-Powered Question Generation</h3>
-        <p style={{ margin: 0, opacity: 0.9 }}>Generate unlimited, context-specific WMS questions using advanced AI</p>
-      </div>
+    <div style={{ padding: 20 }}>
+      {/* HUGE OBVIOUS HEADER */}
+      <Alert
+        message="🤖 AI QUESTION GENERATOR"
+        description="This is where you generate AI questions! Click the button below to create unlimited WMS questions using artificial intelligence."
+        type="success"
+        showIcon
+        style={{ 
+          marginBottom: 30,
+          fontSize: '16px',
+          textAlign: 'center',
+          padding: '20px',
+          background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+          border: '3px solid #52c41a',
+          borderRadius: 12
+        }}
+      />
 
       <Form form={aiForm} layout="vertical">
-        <Collapse defaultActiveKey={['1']} style={{ marginBottom: 16 }}>
-          <Panel header="Single Category Generation" key="1">
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="category"
-                  label="Select Category"
-                  rules={[{ required: true, message: 'Please select a category' }]}
-                >
-                  <Select placeholder="Choose a WMS category" size="large">
-                    {Object.entries(categoryInfo).map(([key, info]) => (
-                      <Option key={key} value={key}>
-                        {info.icon} {info.title}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="count"
-                  label="Number of Questions"
-                  initialValue={10}
-                >
-                  <Slider 
-                    min={5} 
-                    max={25} 
-                    marks={{ 5: '5', 10: '10', 15: '15', 20: '20', 25: '25' }}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+        <Card 
+          title="🎯 Single Category Generation" 
+          style={{ marginBottom: 20 }}
+          headStyle={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 'bold'
+          }}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="category"
+                label="Select WMS Category"
+                rules={[{ required: true, message: 'Please select a category' }]}
+              >
+                <Select placeholder="Choose a category..." size="large">
+                  {Object.entries(categoryInfo).map(([key, info]) => (
+                    <Option key={key} value={key}>
+                      {info.icon} {info.title}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="count"
+                label="Number of Questions"
+                initialValue={10}
+              >
+                <Slider 
+                  min={5} 
+                  max={25} 
+                  marks={{ 5: '5', 10: '10', 15: '15', 20: '20', 25: '25' }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="priority"
-                  label="Priority Focus"
-                  initialValue="Mixed"
-                >
-                  <Radio.Group>
-                    <Radio.Button value="Mixed">Mixed</Radio.Button>
-                    <Radio.Button value="High">High</Radio.Button>
-                    <Radio.Button value="Medium">Medium</Radio.Button>
-                    <Radio.Button value="Low">Low</Radio.Button>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="complexity"
-                  label="Complexity Level"
-                  initialValue="Mixed"
-                >
-                  <Radio.Group>
-                    <Radio.Button value="Mixed">Mixed</Radio.Button>
-                    <Radio.Button value="Basic">Basic</Radio.Button>
-                    <Radio.Button value="Advanced">Advanced</Radio.Button>
-                    <Radio.Button value="Expert">Expert</Radio.Button>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="priority"
+                label="Priority Focus"
+                initialValue="Mixed"
+              >
+                <Radio.Group>
+                  <Radio.Button value="Mixed">Mixed</Radio.Button>
+                  <Radio.Button value="High">High</Radio.Button>
+                  <Radio.Button value="Medium">Medium</Radio.Button>
+                  <Radio.Button value="Low">Low</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="complexity"
+                label="Complexity Level"
+                initialValue="Mixed"
+              >
+                <Radio.Group>
+                  <Radio.Button value="Mixed">Mixed</Radio.Button>
+                  <Radio.Button value="Basic">Basic</Radio.Button>
+                  <Radio.Button value="Advanced">Advanced</Radio.Button>
+                  <Radio.Button value="Expert">Expert</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Button 
-              type="primary" 
-              loading={isGenerating}
-              onClick={generateAIQuestions}
-              icon={<ThunderboltOutlined />}
-              size="large"
-              style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                border: 'none',
-                width: '100%',
-                height: '48px',
-                fontSize: '16px',
-                fontWeight: 500
-              }}
-            >
-              🤖 Generate AI Questions
-            </Button>
-          </Panel>
+          {/* HUGE OBVIOUS BUTTON */}
+          <Button 
+            type="primary" 
+            loading={isGenerating}
+            onClick={generateAIQuestions}
+            icon={<ThunderboltOutlined />}
+            size="large"
+            style={{ 
+              background: 'linear-gradient(135deg, #ff4757 0%, #ff3742 100%)', 
+              border: 'none',
+              width: '100%',
+              height: '60px',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 15px rgba(255, 71, 87, 0.4)'
+            }}
+          >
+            🚀 GENERATE AI QUESTIONS NOW! 🤖
+          </Button>
+        </Card>
 
-          <Panel header="Bulk Generation (All Categories)" key="2">
-            <Form.Item
-              name="questionsPerCategory"
-              label="Questions per Category"
-              initialValue={3}
-            >
-              <Slider 
-                min={2} 
-                max={10} 
-                marks={{ 2: '2', 5: '5', 8: '8', 10: '10' }}
-              />
-            </Form.Item>
-
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col span={12}>
-                <Form.Item
-                  name="bulkPriority"
-                  label="Priority Focus"
-                  initialValue="Mixed"
-                >
-                  <Radio.Group>
-                    <Radio.Button value="Mixed">Mixed</Radio.Button>
-                    <Radio.Button value="High">High</Radio.Button>
-                    <Radio.Button value="Medium">Medium</Radio.Button>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="bulkComplexity"
-                  label="Complexity Level"
-                  initialValue="Mixed"
-                >
-                  <Radio.Group>
-                    <Radio.Button value="Mixed">Mixed</Radio.Button>
-                    <Radio.Button value="Basic">Basic</Radio.Button>
-                    <Radio.Button value="Advanced">Advanced</Radio.Button>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Button 
-              type="primary" 
-              loading={isGenerating}
-              onClick={bulkGenerateQuestions}
-              icon={<ThunderboltOutlined />}
-              size="large"
-              style={{ 
-                background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
-                border: 'none',
-                width: '100%',
-                height: '48px',
-                fontSize: '16px',
-                fontWeight: 500
-              }}
-            >
-              🚀 Bulk Generate All Categories
-            </Button>
-          </Panel>
-        </Collapse>
-
+        {/* RESULTS SECTION */}
         {generationResult && (
           <Card 
-            title={
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ThunderboltOutlined style={{ marginRight: 8, color: '#8b5cf6' }} />
-                Generated Questions Preview
-              </div>
-            } 
-            style={{ marginTop: 16 }}
-            className="modern-card"
+            title="🎉 Generated Questions Preview" 
+            style={{ marginTop: 20 }}
+            headStyle={{ 
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+              color: 'white',
+              fontSize: '16px'
+            }}
           >
             <div style={{ marginBottom: 16 }}>
-              <Tag color="blue">Category: {categoryInfo[generationResult.category]?.title}</Tag>
-              <Tag color="green">Generated: {generationResult.count} questions</Tag>
-              {generationResult.ai_powered && <Tag color="purple">AI-Powered</Tag>}
+              <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                Category: {categoryInfo[generationResult.category]?.title || generationResult.category}
+              </Tag>
+              <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                Generated: {generationResult.count} questions
+              </Tag>
+              {generationResult.ai_powered && (
+                <Tag color="purple" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                  AI-Powered
+                </Tag>
+              )}
             </div>
             
-            <div style={{ maxHeight: 400, overflowY: 'auto', marginBottom: 16 }}>
+            <div style={{ maxHeight: 400, overflowY: 'auto', marginBottom: 20 }}>
               {generationResult.questions.map((question, index) => (
                 <div key={index} style={{ 
                   padding: 16, 
-                  border: '1px solid #e2e8f0', 
+                  border: '2px solid #e2e8f0', 
                   borderRadius: 8, 
                   marginBottom: 12,
-                  background: '#f8fafc',
-                  transition: 'all 0.2s ease'
+                  background: '#f8fafc'
                 }}>
-                  <p style={{ margin: 0, marginBottom: 8, fontSize: '14px', lineHeight: '1.5' }}>{question.text}</p>
+                  <p style={{ margin: 0, marginBottom: 8, fontSize: '15px', fontWeight: '500' }}>
+                    {question.text}
+                  </p>
                   <Space>
                     <Tag color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}>
                       {question.priority} Priority
                     </Tag>
-                    {question.focus_area && (
-                      <Tag color="purple">{question.focus_area}</Tag>
-                    )}
                     {question.ai_generated && (
                       <Tag color="cyan" icon={<RobotOutlined />}>AI Generated</Tag>
                     )}
@@ -715,14 +394,15 @@ const QuestionBank = () => {
               size="large"
               style={{ 
                 width: '100%',
-                height: '48px',
-                fontSize: '16px',
-                fontWeight: 500,
+                height: '50px',
+                fontSize: '18px',
+                fontWeight: 'bold',
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                border: 'none'
+                border: 'none',
+                boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
               }}
             >
-              ✅ Add All Generated Questions to Question Bank
+              ✅ ADD ALL QUESTIONS TO QUESTION BANK ✅
             </Button>
           </Card>
         )}
@@ -730,15 +410,24 @@ const QuestionBank = () => {
     </div>
   );
 
+  const getTotalQuestions = () => {
+    return Object.values(questions).flat().length;
+  };
+
+  const getAIGeneratedCount = () => {
+    return Object.values(questions).flat().filter(q => q.ai_generated === true).length;
+  };
+
+  // TAB ITEMS WITH AI QUESTIONS FIRST
   const tabItems = [
-    // AI Questions Tab (First tab)
+    // AI QUESTIONS TAB - FIRST AND OBVIOUS
     {
       key: 'ai-questions',
       label: (
-        <span style={{ fontSize: '14px' }}>
-          <RobotOutlined style={{ color: '#8b5cf6' }} />
-          <span style={{ marginLeft: 8 }}>AI Questions</span>
-          <Tag style={{ marginLeft: 8 }} color="purple">Generate</Tag>
+        <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
+          <RobotOutlined style={{ color: '#ff4757', fontSize: '18px' }} />
+          <span style={{ marginLeft: 8, color: '#ff4757' }}>🤖 AI QUESTIONS</span>
+          <Tag style={{ marginLeft: 8 }} color="red">GENERATE HERE!</Tag>
         </span>
       ),
       children: renderAIQuestionsTab()
@@ -750,37 +439,41 @@ const QuestionBank = () => {
         <span style={{ fontSize: '14px' }}>
           {info.icon}
           <span style={{ marginLeft: 8 }}>{info.title}</span>
-          <Tag 
-            style={{ marginLeft: 8 }} 
-            color="blue"
-          >
+          <Tag style={{ marginLeft: 8 }} color="blue">
             {questions[key]?.length || 0}
           </Tag>
         </span>
       ),
       children: (
-        <div>
+        <div style={{ padding: 20 }}>
           <div style={{ marginBottom: 16, padding: 12, background: '#f8fafc', borderRadius: 6 }}>
             <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>{info.description}</p>
           </div>
+          
           <Space style={{ marginBottom: 16 }}>
             <Button 
               type="primary" 
               icon={<PlusOutlined />} 
               onClick={handleAddQuestion}
-              className="modern-btn modern-btn-primary"
             >
-              Add Question
+              Add Manual Question
             </Button>
+            <Alert 
+              message="💡 Want AI questions? Go to the 'AI Questions' tab!" 
+              type="info" 
+              showIcon 
+              style={{ flex: 1 }}
+            />
           </Space>
+          
           <div>
             {questions[key]?.map(question => renderQuestionCard(question, key))}
             {(!questions[key] || questions[key].length === 0) && (
               <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
                 <QuestionCircleOutlined style={{ fontSize: 48, marginBottom: 16 }} />
-                <p>No questions added yet for this category</p>
-                <p style={{ fontSize: '12px', color: '#94a3b8' }}>
-                  Go to the "AI Questions" tab to generate questions with AI
+                <p style={{ fontSize: '16px' }}>No questions added yet for this category</p>
+                <p style={{ fontSize: '14px', color: '#94a3b8' }}>
+                  Go to the <strong>"🤖 AI Questions"</strong> tab to generate questions with AI!
                 </p>
               </div>
             )}
@@ -793,18 +486,17 @@ const QuestionBank = () => {
   return (
     <div className="main-content fade-in">
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 600, margin: 0, color: '#1e293b' }}>
-          <QuestionCircleOutlined style={{ marginRight: 12, color: '#3b82f6' }} />
+        <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#1e293b' }}>
           Question Bank
-        </h1>
-        <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '16px' }}>
-          Comprehensive WMS question repository with AI-powered generation
+        </h2>
+        <p style={{ margin: '8px 0 0 0', color: '#64748b' }}>
+          Manage WMS questions and generate new ones with AI
         </p>
       </div>
 
-      {/* Statistics Cards */}
-      <Row gutter={[24, 16]} style={{ marginBottom: 32 }}>
-        <Col xs={24} sm={12} md={6}>
+      {/* Statistics */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={8}>
           <Card className="modern-card stat-card">
             <div className="stat-content">
               <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}>
@@ -817,20 +509,7 @@ const QuestionBank = () => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card className="modern-card stat-card">
-            <div className="stat-content">
-              <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}>
-                <UserOutlined />
-              </div>
-              <div>
-                <h3>{getQuestionsByPriority('High')}</h3>
-                <p>High Priority</p>
-              </div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card className="modern-card stat-card">
             <div className="stat-content">
               <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
@@ -843,7 +522,7 @@ const QuestionBank = () => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card className="modern-card stat-card">
             <div className="stat-content">
               <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
@@ -858,15 +537,30 @@ const QuestionBank = () => {
         </Col>
       </Row>
 
+      {/* HUGE NOTICE */}
+      <Alert
+        message="🚨 LOOKING FOR AI QUESTION GENERATION?"
+        description="Click the '🤖 AI QUESTIONS' tab above to generate unlimited WMS questions with artificial intelligence!"
+        type="warning"
+        showIcon
+        style={{ 
+          marginBottom: 24,
+          fontSize: '16px',
+          padding: '16px',
+          background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+          border: '2px solid #f59e0b',
+          borderRadius: 8
+        }}
+      />
 
-
-      {/* Question Categories */}
+      {/* Question Categories Tabs */}
       <Card className="modern-card" style={{ minHeight: '60vh' }}>
         <Tabs 
           items={tabItems}
           size="large"
           style={{ minHeight: '500px' }}
           tabPosition="top"
+          defaultActiveKey="ai-questions"
         />
       </Card>
 
@@ -919,8 +613,6 @@ const QuestionBank = () => {
           </Form.Item>
         </Form>
       </Modal>
-
-
     </div>
   );
 };
