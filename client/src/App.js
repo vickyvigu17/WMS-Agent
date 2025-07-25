@@ -6,7 +6,7 @@ import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
-import WMSProcesses from './pages/WMSProcesses';
+import QuestionBank from './pages/QuestionBank';
 import './App.css';
 
 const { Content } = Layout;
@@ -32,7 +32,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
-                <Route path="/wms-processes" element={<WMSProcesses />} />
+                <Route path="/question-bank" element={<QuestionBank />} />
               </Routes>
             </Content>
           </Layout>
