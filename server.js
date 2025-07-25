@@ -8,6 +8,9 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy for production deployment (Render, Heroku, etc.)
+app.set('trust proxy', 1);
+
 // Simple in-memory storage for demo (you could replace with a database)
 let clients = [
   { id: 1, name: 'Walmart', industry: 'Retail', location: 'Bentonville, AR', company_size: 'Large', created_at: '2024-01-15' },
@@ -595,10 +598,13 @@ app.use(helmet({
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Rate limiting
+// Rate limiting with proxy support
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  trustProxy: true // Trust proxy headers for accurate IP detection
 });
 app.use('/api', limiter);
 
