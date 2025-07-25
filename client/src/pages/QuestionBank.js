@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { 
-  Card, Tabs, Button, Modal, Form, Input, Select, message, Tag, Space, Popconfirm, Row, Col, Collapse
+  Card, Tabs, Button, Modal, Form, Input, Select, message, Tag, Space, Popconfirm, Row, Col, 
+  Spin, Alert, Collapse, Slider, Radio, Switch, Divider
 } from 'antd';
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined, 
   InboxOutlined, SendOutlined, ApiOutlined, SettingOutlined, UserOutlined,
   DatabaseOutlined, TruckOutlined, ScanOutlined, SafetyOutlined, TeamOutlined,
   DashboardOutlined, ClockCircleOutlined, ShoppingCartOutlined, FileTextOutlined,
-  ToolOutlined, CloudOutlined, MobileOutlined, BarChartOutlined
+  ToolOutlined, CloudOutlined, MobileOutlined, BarChartOutlined, RobotOutlined,
+  ThunderboltOutlined, BulbOutlined
 } from '@ant-design/icons';
+import axios from 'axios';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -184,6 +187,12 @@ const QuestionBank = () => {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [form] = Form.useForm();
 
+  // NEW: AI Generation State
+  const [isAIModalVisible, setIsAIModalVisible] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationResult, setGenerationResult] = useState(null);
+  const [aiForm] = Form.useForm();
+
   const categoryInfo = {
     // INBOUND OPERATIONS
     receiving: { 
@@ -298,6 +307,105 @@ const QuestionBank = () => {
     }
   };
 
+  // NEW: AI Generation Functions
+  const handleAIGenerate = () => {
+    aiForm.resetFields();
+    setGenerationResult(null);
+    setIsAIModalVisible(true);
+  };
+
+  const generateAIQuestions = async () => {
+    try {
+      setIsGenerating(true);
+      const values = await aiForm.validateFields();
+      
+      const response = await axios.post('/api/question-bank/generate', {
+        category: values.category,
+        count: values.count,
+        priority: values.priority,
+        complexity: values.complexity
+      });
+
+      if (response.data.success) {
+        setGenerationResult(response.data);
+        message.success(`Generated ${response.data.count} AI-powered questions!`);
+      } else {
+        message.error('Failed to generate questions');
+      }
+    } catch (error) {
+      console.error('AI generation error:', error);
+      message.error(error.response?.data?.message || 'Failed to generate AI questions');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const addGeneratedQuestions = () => {
+    if (generationResult && generationResult.questions) {
+      const category = generationResult.category;
+      
+      setQuestions(prev => ({
+        ...prev,
+        [category]: [
+          ...(prev[category] || []),
+          ...generationResult.questions.map(q => ({
+            ...q,
+            id: Math.max(...Object.values(prev).flat().map(q => q.id || 0)) + Math.random()
+          }))
+        ]
+      }));
+      
+      setIsAIModalVisible(false);
+      setGenerationResult(null);
+      message.success(`Added ${generationResult.questions.length} AI-generated questions to ${categoryInfo[category]?.title}`);
+    }
+  };
+
+  const bulkGenerateQuestions = async () => {
+    try {
+      setIsGenerating(true);
+      const values = await aiForm.validateFields();
+      
+      // Generate for multiple categories
+      const selectedCategories = values.bulkCategories || Object.keys(categoryInfo);
+      
+      const response = await axios.post('/api/question-bank/bulk-generate', {
+        categories: selectedCategories,
+        questionsPerCategory: values.questionsPerCategory || 3,
+        priority: values.priority,
+        complexity: values.complexity
+      });
+
+      if (response.data.success) {
+        // Add all generated questions to state
+        const newQuestions = { ...questions };
+        
+        Object.entries(response.data.results).forEach(([category, result]) => {
+          if (result.success && result.questions) {
+            newQuestions[category] = [
+              ...(newQuestions[category] || []),
+              ...result.questions.map(q => ({
+                ...q,
+                id: Math.max(...Object.values(newQuestions).flat().map(q => q.id || 0)) + Math.random()
+              }))
+            ];
+          }
+        });
+        
+        setQuestions(newQuestions);
+        setIsAIModalVisible(false);
+        message.success(`Bulk generated ${response.data.totalQuestions} questions across ${response.data.categoriesProcessed} categories!`);
+      } else {
+        message.error('Failed to bulk generate questions');
+      }
+    } catch (error) {
+      console.error('Bulk generation error:', error);
+      message.error(error.response?.data?.message || 'Failed to bulk generate questions');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleAddQuestion = () => {
     setEditingQuestion(null);
     form.resetFields();
@@ -365,12 +473,18 @@ const QuestionBank = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1, marginRight: 16 }}>
           <p style={{ margin: 0, lineHeight: '1.4' }}>{question.text}</p>
-          <Tag 
-            color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}
-            style={{ marginTop: 8 }}
-          >
-            {question.priority} Priority
-          </Tag>
+          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            <Tag 
+              color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}
+            >
+              {question.priority} Priority
+            </Tag>
+            {question.ai_generated && (
+              <Tag color="purple" icon={<RobotOutlined />}>
+                AI Generated
+              </Tag>
+            )}
+          </div>
         </div>
         <Space>
           <Button 
@@ -397,6 +511,10 @@ const QuestionBank = () => {
 
   const getQuestionsByPriority = (priority) => {
     return Object.values(questions).flat().filter(q => q.priority === priority).length;
+  };
+
+  const getAIGeneratedCount = () => {
+    return Object.values(questions).flat().filter(q => q.ai_generated === true).length;
   };
 
   const tabItems = Object.entries(categoryInfo).map(([key, info]) => ({
@@ -427,6 +545,15 @@ const QuestionBank = () => {
           >
             Add Question
           </Button>
+          <Button 
+            type="default" 
+            icon={<RobotOutlined />} 
+            onClick={handleAIGenerate}
+            className="modern-btn"
+            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none' }}
+          >
+            AI Generate
+          </Button>
         </Space>
         <div>
           {questions[key]?.map(question => renderQuestionCard(question, key))}
@@ -434,6 +561,14 @@ const QuestionBank = () => {
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
               <QuestionCircleOutlined style={{ fontSize: 48, marginBottom: 16 }} />
               <p>No questions added yet for this category</p>
+              <Button 
+                type="primary" 
+                icon={<RobotOutlined />} 
+                onClick={handleAIGenerate}
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }}
+              >
+                Generate with AI
+              </Button>
             </div>
           )}
         </div>
@@ -449,7 +584,7 @@ const QuestionBank = () => {
           Question Bank
         </h1>
         <p style={{ color: '#64748b', margin: '8px 0 0 0', fontSize: '16px' }}>
-          Comprehensive WMS question repository organized by process areas
+          Comprehensive WMS question repository with AI-powered generation
         </p>
       </div>
 
@@ -484,12 +619,12 @@ const QuestionBank = () => {
         <Col xs={24} sm={12} md={6}>
           <Card className="modern-card stat-card">
             <div className="stat-content">
-              <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' }}>
-                <SettingOutlined />
+              <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+                <RobotOutlined />
               </div>
               <div>
-                <h3>{getQuestionsByPriority('Medium')}</h3>
-                <p>Medium Priority</p>
+                <h3>{getAIGeneratedCount()}</h3>
+                <p>AI Generated</p>
               </div>
             </div>
           </Card>
@@ -508,6 +643,30 @@ const QuestionBank = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* AI Generation Button */}
+      <Card className="modern-card" style={{ marginBottom: 24 }}>
+        <div style={{ textAlign: 'center', padding: '16px 0' }}>
+          <BulbOutlined style={{ fontSize: 32, color: '#8b5cf6', marginBottom: 16 }} />
+          <h3 style={{ margin: '0 0 8px 0', color: '#1e293b' }}>AI-Powered Question Generation</h3>
+          <p style={{ color: '#64748b', marginBottom: 16 }}>Generate unlimited, context-specific WMS questions using advanced AI</p>
+          <Button 
+            type="primary" 
+            size="large"
+            icon={<RobotOutlined />} 
+            onClick={handleAIGenerate}
+            style={{ 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+              border: 'none',
+              height: '48px',
+              fontSize: '16px',
+              fontWeight: 500
+            }}
+          >
+            Generate Questions with AI
+          </Button>
+        </div>
+      </Card>
 
       {/* Question Categories */}
       <Card className="modern-card" style={{ minHeight: '60vh' }}>
@@ -567,6 +726,181 @@ const QuestionBank = () => {
             </Select>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* AI Generation Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <RobotOutlined style={{ marginRight: 8, color: '#8b5cf6' }} />
+            AI Question Generator
+          </div>
+        }
+        open={isAIModalVisible}
+        onCancel={() => setIsAIModalVisible(false)}
+        width={700}
+        className="modern-modal"
+        footer={null}
+      >
+        <div style={{ marginTop: 16 }}>
+          <Alert
+            message="AI-Powered Question Generation"
+            description="Generate unlimited, context-specific WMS questions using OpenAI. Customize parameters to get exactly the questions you need."
+            type="info"
+            icon={<BulbOutlined />}
+            style={{ marginBottom: 24 }}
+          />
+
+          <Form form={aiForm} layout="vertical">
+            <Collapse defaultActiveKey={['1']} style={{ marginBottom: 24 }}>
+              <Panel header="Single Category Generation" key="1">
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="category"
+                      label="Category"
+                      rules={[{ required: true, message: 'Please select a category' }]}
+                    >
+                      <Select placeholder="Select category" size="large">
+                        {Object.entries(categoryInfo).map(([key, info]) => (
+                          <Option key={key} value={key}>
+                            {info.icon} {info.title}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="count"
+                      label="Number of Questions"
+                      initialValue={10}
+                    >
+                      <Slider 
+                        min={5} 
+                        max={25} 
+                        marks={{ 5: '5', 10: '10', 15: '15', 20: '20', 25: '25' }}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="priority"
+                      label="Priority Distribution"
+                      initialValue="Mixed"
+                    >
+                      <Radio.Group>
+                        <Radio.Button value="Mixed">Mixed</Radio.Button>
+                        <Radio.Button value="High">High</Radio.Button>
+                        <Radio.Button value="Medium">Medium</Radio.Button>
+                        <Radio.Button value="Low">Low</Radio.Button>
+                      </Radio.Group>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="complexity"
+                      label="Complexity Level"
+                      initialValue="Mixed"
+                    >
+                      <Radio.Group>
+                        <Radio.Button value="Mixed">Mixed</Radio.Button>
+                        <Radio.Button value="Basic">Basic</Radio.Button>
+                        <Radio.Button value="Advanced">Advanced</Radio.Button>
+                        <Radio.Button value="Expert">Expert</Radio.Button>
+                      </Radio.Group>
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Button 
+                  type="primary" 
+                  loading={isGenerating}
+                  onClick={generateAIQuestions}
+                  icon={<ThunderboltOutlined />}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                    border: 'none',
+                    width: '100%',
+                    height: '40px'
+                  }}
+                >
+                  Generate Questions
+                </Button>
+              </Panel>
+
+              <Panel header="Bulk Generation (All Categories)" key="2">
+                <Form.Item
+                  name="questionsPerCategory"
+                  label="Questions per Category"
+                  initialValue={3}
+                >
+                  <Slider 
+                    min={2} 
+                    max={10} 
+                    marks={{ 2: '2', 5: '5', 8: '8', 10: '10' }}
+                  />
+                </Form.Item>
+
+                <Button 
+                  type="primary" 
+                  loading={isGenerating}
+                  onClick={bulkGenerateQuestions}
+                  icon={<ThunderboltOutlined />}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
+                    border: 'none',
+                    width: '100%',
+                    height: '40px'
+                  }}
+                >
+                  Bulk Generate All Categories
+                </Button>
+              </Panel>
+            </Collapse>
+
+            {generationResult && (
+              <Card title="Generated Questions" style={{ marginTop: 16 }}>
+                <div style={{ marginBottom: 16 }}>
+                  <Tag color="blue">Category: {categoryInfo[generationResult.category]?.title}</Tag>
+                  <Tag color="green">Generated: {generationResult.count} questions</Tag>
+                  {generationResult.ai_powered && <Tag color="purple">AI-Powered</Tag>}
+                </div>
+                
+                <div style={{ maxHeight: 300, overflowY: 'auto', marginBottom: 16 }}>
+                  {generationResult.questions.map((question, index) => (
+                    <div key={index} style={{ 
+                      padding: 12, 
+                      border: '1px solid #e2e8f0', 
+                      borderRadius: 6, 
+                      marginBottom: 8,
+                      background: '#f8fafc'
+                    }}>
+                      <p style={{ margin: 0, marginBottom: 8 }}>{question.text}</p>
+                      <Tag color={question.priority === 'High' ? 'red' : question.priority === 'Medium' ? 'orange' : 'blue'}>
+                        {question.priority}
+                      </Tag>
+                      {question.focus_area && (
+                        <Tag color="purple">{question.focus_area}</Tag>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <Button 
+                  type="primary" 
+                  onClick={addGeneratedQuestions}
+                  style={{ width: '100%' }}
+                >
+                  Add All Generated Questions to Question Bank
+                </Button>
+              </Card>
+            )}
+          </Form>
+        </div>
       </Modal>
     </div>
   );
