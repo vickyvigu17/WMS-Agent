@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   DashboardOutlined,
   ProjectOutlined,
-  SettingOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 
@@ -26,9 +25,9 @@ const Sidebar = () => {
       label: 'Projects',
     },
     {
-      key: '/wms-processes',
-      icon: <SettingOutlined />,
-      label: 'WMS Processes',
+      key: '/question-bank',
+      icon: <QuestionCircleOutlined />,
+      label: 'Question Bank',
     },
   ];
 
