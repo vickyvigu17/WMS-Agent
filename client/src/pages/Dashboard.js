@@ -1,150 +1,96 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table, Tag } from 'antd';
-import { UserOutlined, ProjectOutlined, QuestionOutlined, RiseOutlined } from '@ant-design/icons';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { dashboardAPI } from '../services/api';
+import React from 'react';
+import { Card, Row, Col, Statistic, Typography, Alert } from 'antd';
+import {
+  UserOutlined,
+  ProjectOutlined,
+  QuestionCircleOutlined,
+  RobotOutlined,
+  TrophyOutlined,
+  RiseOutlined
+} from '@ant-design/icons';
+
+const { Title, Paragraph } = Typography;
 
 const Dashboard = () => {
-  const [summary, setSummary] = useState({
-    total_clients: 0,
-    total_projects: 0,
-    total_questions: 0,
-    answered_questions: 0,
-    question_completion_rate: 0
-  });
-  const [recentProjects, setRecentProjects] = useState([]);
-  const [industryData, setIndustryData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const response = await dashboardAPI.getSummary();
-      const data = response.data;
-      setSummary(data.summary);
-      setRecentProjects(data.recent_projects || []);
-      setIndustryData(data.industry_distribution || []);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-  const projectColumns = [
-    {
-      title: 'Project Name',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'active' ? 'green' : status === 'completed' ? 'blue' : 'orange'}>
-          {status?.toUpperCase()}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Created',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (date) => new Date(date).toLocaleDateString(),
-    },
-  ];
-
   return (
-    <div style={{ padding: '24px' }}>
-      <h1>Dashboard</h1>
-      
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={12} lg={6}>
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <Title level={1} style={{ color: '#667eea', margin: 0 }}>
+          🎯 WMS Consultant Dashboard
+        </Title>
+        <Paragraph style={{ fontSize: '16px', color: '#666', margin: '8px 0 0 0' }}>
+          Welcome to your AI-powered WMS implementation workspace
+        </Paragraph>
+      </div>
+
+      <Alert
+        message="🚀 New AI Features Available!"
+        description="Check out the AI Questions section to generate unlimited WMS implementation questions using artificial intelligence."
+        type="success"
+        style={{ marginBottom: 24 }}
+        showIcon
+      />
+
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={6}>
           <Card>
             <Statistic
-              title="Total Clients"
-              value={summary.total_clients}
-              prefix={<UserOutlined />}
+              title="Active Projects"
+              value={3}
+              prefix={<ProjectOutlined />}
               valueStyle={{ color: '#3f8600' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={6}>
           <Card>
             <Statistic
-              title="Active Projects"
-              value={summary.total_projects}
-              prefix={<ProjectOutlined />}
+              title="Questions Generated"
+              value={127}
+              prefix={<QuestionCircleOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={6}>
           <Card>
             <Statistic
-              title="Total Questions"
-              value={summary.total_questions}
-              prefix={<QuestionOutlined />}
+              title="AI Research Reports"
+              value={8}
+              prefix={<RobotOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col span={6}>
           <Card>
             <Statistic
-              title="Completion Rate"
-              value={summary.question_completion_rate}
+              title="Success Rate"
+              value={94.2}
+              precision={1}
               suffix="%"
-              prefix={<RiseOutlined />}
+              prefix={<TrophyOutlined />}
               valueStyle={{ color: '#cf1322' }}
             />
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <Card title="Industry Distribution" style={{ height: '400px' }}>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={industryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ industry, count }) => `${industry}: ${count}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {industryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+      <Row gutter={16}>
+        <Col span={12}>
+          <Card title="📊 Recent Activity" style={{ height: 300 }}>
+            <div style={{ textAlign: 'center', paddingTop: 60 }}>
+              <RiseOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
+              <p>Your WMS consulting activities will appear here</p>
+            </div>
           </Card>
         </Col>
-
-        <Col xs={24} lg={12}>
-          <Card title="Recent Projects" style={{ height: '400px' }}>
-            <Table
-              columns={projectColumns}
-              dataSource={recentProjects}
-              loading={loading}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              locale={{
-                emptyText: 'No recent projects found'
-              }}
-            />
+        <Col span={12}>
+          <Card title="AI Insights" style={{ height: 300 }}>
+            <div style={{ textAlign: 'center', paddingTop: 60 }}>
+              <RobotOutlined style={{ fontSize: 48, color: '#722ed1', marginBottom: 16 }} />
+              <p>AI-powered insights and recommendations</p>
+            </div>
           </Card>
         </Col>
       </Row>
