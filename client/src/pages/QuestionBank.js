@@ -1,551 +1,537 @@
 import React, { useState } from 'react';
-import { 
-  Card, 
-  Tabs, 
-  Button, 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
-  message, 
-  Tag,
+import {
+  Card,
+  Tabs,
+  Button,
+  Form,
+  Select,
+  Slider,
+  Alert,
   Space,
-  Popconfirm,
+  Tag,
   Row,
-  Col
+  Col,
+  Spin,
+  message,
+  Typography
 } from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined,
+import {
+  RobotOutlined,
+  PlusOutlined,
   QuestionCircleOutlined,
+  ThunderboltOutlined,
   InboxOutlined,
-  SendOutlined,
-  ApiOutlined,
-  SettingOutlined,
-  UserOutlined
+  BarChartOutlined,
+  FileTextOutlined,
+  TruckOutlined,
+  LinkOutlined
 } from '@ant-design/icons';
 
+const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
-const { TextArea } = Input;
 
 const QuestionBank = () => {
-  const [questions, setQuestions] = useState({
-    inbound: [
-      {
-        id: 1,
-        question: "What is your current daily receiving volume (number of receipts/SKUs)?",
-        priority: "high",
-        subcategory: "Receiving"
-      },
-      {
-        id: 2,
-        question: "How do you currently handle advance shipment notifications (ASNs)?",
-        priority: "high",
-        subcategory: "Receiving"
-      },
-      {
-        id: 3,
-        question: "What put-away strategies do you currently use (random, fixed, zone-based)?",
-        priority: "high",
-        subcategory: "Put-away"
-      },
-      {
-        id: 4,
-        question: "How do you determine optimal storage locations for received items?",
-        priority: "medium",
-        subcategory: "Put-away"
-      },
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const [questionCount, setQuestionCount] = useState(10);
+
+  // Category definitions with WMS processes
+  const categoryInfo = {
+    receiving: {
+      title: 'Receiving & Inbound',
+      icon: <InboxOutlined style={{ color: '#52c41a' }} />,
+      description: 'Questions about receiving processes, dock management, and inbound logistics.',
+      color: '#52c41a'
+    },
+    inventory: {
+      title: 'Inventory Management',
+      icon: <BarChartOutlined style={{ color: '#1890ff' }} />,
+      description: 'Questions about inventory control, cycle counting, and stock optimization.',
+      color: '#1890ff'
+    },
+    picking: {
+      title: 'Picking & Packing',
+      icon: <FileTextOutlined style={{ color: '#fa8c16' }} />,
+      description: 'Questions about order fulfillment, picking strategies, and packing operations.',
+      color: '#fa8c16'
+    },
+    shipping: {
+      title: 'Shipping & Outbound',
+      icon: <TruckOutlined style={{ color: '#722ed1' }} />,
+      description: 'Questions about shipping processes, carrier management, and outbound logistics.',
+      color: '#722ed1'
+    },
+    integration: {
+      title: 'System Integration',
+      icon: <LinkOutlined style={{ color: '#eb2f96' }} />,
+      description: 'Questions about ERP integration, data flows, and system architecture.',
+      color: '#eb2f96'
+    },
+    technical: {
+      title: 'Technical Architecture',
+      icon: <ThunderboltOutlined style={{ color: '#f5222d' }} />,
+      description: 'Questions about system architecture, performance, and technical requirements.',
+      color: '#f5222d'
+    }
+  };
+
+  // Demo questions database (same as HTML version)
+  const demoQuestions = {
+    receiving: [
+      { q: "How do you currently validate incoming shipment quantities against purchase orders?", tags: ["Process", "Accuracy"] },
+      { q: "What is your strategy for handling damaged goods during receiving?", tags: ["Quality", "Process"] },
+      { q: "How do you manage receiving operations during peak seasons?", tags: ["Capacity", "Planning"] },
+      { q: "What documentation is required for your receiving process?", tags: ["Compliance", "Documentation"] },
+      { q: "How do you handle discrepancies between expected and actual deliveries?", tags: ["Exception", "Process"] },
+      { q: "What are your receiving dock capacity and layout requirements?", tags: ["Infrastructure", "Capacity"] },
+      { q: "How do you prioritize incoming shipments for processing?", tags: ["Priority", "Workflow"] },
+      { q: "What quality control measures do you have during receiving?", tags: ["Quality", "Control"] },
+      { q: "How do you handle cross-docking operations?", tags: ["Cross-dock", "Efficiency"] },
+      { q: "What are your appointment scheduling requirements for vendors?", tags: ["Scheduling", "Vendor"] }
     ],
-    outbound: [
-      {
-        id: 5,
-        question: "What picking methods do you currently use (piece, case, pallet, batch)?",
-        priority: "high",
-        subcategory: "Picking"
-      },
-      {
-        id: 6,
-        question: "What is your current pick accuracy rate and target?",
-        priority: "high",
-        subcategory: "Picking"
-      },
-      {
-        id: 7,
-        question: "How do you optimize pick paths and minimize travel time?",
-        priority: "medium",
-        subcategory: "Picking"
-      },
-      {
-        id: 8,
-        question: "What types of packaging do you use and how is packaging determined?",
-        priority: "medium",
-        subcategory: "Packing"
-      },
+    inventory: [
+      { q: "What methods do you use for inventory classification and prioritization?", tags: ["Classification", "Strategy"] },
+      { q: "How do you manage inventory across multiple locations?", tags: ["Multi-site", "Control"] },
+      { q: "What is your approach to safety stock calculations?", tags: ["Planning", "Optimization"] },
+      { q: "How do you handle seasonal inventory fluctuations?", tags: ["Seasonality", "Planning"] },
+      { q: "What KPIs do you track for inventory performance?", tags: ["Metrics", "Performance"] },
+      { q: "How do you manage slow-moving and obsolete inventory?", tags: ["Obsolete", "Management"] },
+      { q: "What cycle counting strategies do you employ?", tags: ["Counting", "Accuracy"] },
+      { q: "How do you handle lot tracking and expiration dates?", tags: ["Lot", "Expiration"] },
+      { q: "What are your inventory accuracy requirements?", tags: ["Accuracy", "Requirements"] },
+      { q: "How do you manage inventory replenishment triggers?", tags: ["Replenishment", "Triggers"] }
+    ],
+    picking: [
+      { q: "What picking strategies do you employ for different order types?", tags: ["Strategy", "Optimization"] },
+      { q: "How do you minimize pick errors and improve accuracy?", tags: ["Accuracy", "Quality"] },
+      { q: "What technology do you use for pick path optimization?", tags: ["Technology", "Efficiency"] },
+      { q: "How do you handle partial picks and backorders?", tags: ["Exception", "Process"] },
+      { q: "What is your approach to batch picking vs single order picking?", tags: ["Strategy", "Efficiency"] },
+      { q: "How do you manage pick slot optimization and slotting?", tags: ["Slotting", "Optimization"] },
+      { q: "What are your peak picking volume requirements?", tags: ["Volume", "Capacity"] },
+      { q: "How do you handle priority orders and rush shipments?", tags: ["Priority", "Rush"] },
+      { q: "What pick confirmation methods do you use?", tags: ["Confirmation", "Accuracy"] },
+      { q: "How do you manage wave planning and release?", tags: ["Wave", "Planning"] }
+    ],
+    shipping: [
+      { q: "How do you optimize carrier selection and routing?", tags: ["Optimization", "Carriers"] },
+      { q: "What is your process for handling expedited shipments?", tags: ["Urgency", "Process"] },
+      { q: "How do you manage shipping costs and rate shopping?", tags: ["Cost", "Optimization"] },
+      { q: "What tracking and visibility do you provide to customers?", tags: ["Visibility", "Service"] },
+      { q: "How do you handle international shipping requirements?", tags: ["International", "Compliance"] },
+      { q: "What are your packaging and labeling requirements?", tags: ["Packaging", "Labeling"] },
+      { q: "How do you manage shipping documentation and compliance?", tags: ["Documentation", "Compliance"] },
+      { q: "What are your on-time delivery performance targets?", tags: ["Performance", "Delivery"] },
+      { q: "How do you handle shipping damage and claims?", tags: ["Damage", "Claims"] },
+      { q: "What consolidation strategies do you use for outbound shipments?", tags: ["Consolidation", "Strategy"] }
     ],
     integration: [
-      {
-        id: 9,
-        question: "What ERP system are you currently using and what version?",
-        priority: "high",
-        subcategory: "ERP Integration"
-      },
-      {
-        id: 10,
-        question: "What data needs to be synchronized between WMS and ERP?",
-        priority: "high",
-        subcategory: "ERP Integration"
-      },
-      {
-        id: 11,
-        question: "What other systems need to integrate with the WMS (TMS, EDI, e-commerce)?",
-        priority: "medium",
-        subcategory: "System Integration"
-      },
+      { q: "What are your real-time data synchronization requirements?", tags: ["Integration", "Real-time"] },
+      { q: "How do you handle data mapping between systems?", tags: ["Data", "Mapping"] },
+      { q: "What APIs and web services do you currently use?", tags: ["API", "Technology"] },
+      { q: "How do you manage master data consistency across systems?", tags: ["Data", "Consistency"] },
+      { q: "What are your system backup and disaster recovery requirements?", tags: ["Backup", "Recovery"] },
+      { q: "How do you handle EDI transactions and requirements?", tags: ["EDI", "Transactions"] },
+      { q: "What ERP system integration points are critical?", tags: ["ERP", "Integration"] },
+      { q: "How do you manage data validation and error handling?", tags: ["Validation", "Errors"] },
+      { q: "What are your reporting and analytics requirements?", tags: ["Reporting", "Analytics"] },
+      { q: "How do you handle system performance monitoring?", tags: ["Performance", "Monitoring"] }
     ],
     technical: [
-      {
-        id: 12,
-        question: "What mobile devices and scanners are you currently using?",
-        priority: "medium",
-        subcategory: "Hardware"
-      },
-      {
-        id: 13,
-        question: "What is your current network infrastructure (WiFi coverage, bandwidth)?",
-        priority: "high",
-        subcategory: "Infrastructure"
-      },
-      {
-        id: 14,
-        question: "How clean and standardized is your current item master data?",
-        priority: "high",
-        subcategory: "Data Quality"
-      },
-    ],
-    business: [
-      {
-        id: 15,
-        question: "What are your current order processing times and targets?",
-        priority: "high",
-        subcategory: "Performance"
-      },
-      {
-        id: 16,
-        question: "What are your peak volume requirements (orders per hour/day)?",
-        priority: "high",
-        subcategory: "Capacity"
-      },
-      {
-        id: 17,
-        question: "What key performance indicators (KPIs) do you need to track?",
-        priority: "medium",
-        subcategory: "Reporting"
-      },
+      { q: "What are your scalability requirements for the WMS?", tags: ["Scalability", "Architecture"] },
+      { q: "How do you handle system performance during peak operations?", tags: ["Performance", "Peak"] },
+      { q: "What are your data security and compliance requirements?", tags: ["Security", "Compliance"] },
+      { q: "How do you manage user access and permissions?", tags: ["Security", "Access"] },
+      { q: "What are your system availability and uptime requirements?", tags: ["Availability", "SLA"] },
+      { q: "How do you handle database performance and optimization?", tags: ["Database", "Performance"] },
+      { q: "What are your mobile device and hardware requirements?", tags: ["Mobile", "Hardware"] },
+      { q: "How do you manage system upgrades and maintenance?", tags: ["Upgrades", "Maintenance"] },
+      { q: "What are your cloud vs on-premise preferences?", tags: ["Cloud", "Infrastructure"] },
+      { q: "How do you handle system testing and validation?", tags: ["Testing", "Validation"] }
     ]
-  });
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState(null);
-  const [form] = Form.useForm();
-
-  const categoryIcons = {
-    inbound: <InboxOutlined />,
-    outbound: <SendOutlined />,
-    integration: <ApiOutlined />,
-    technical: <SettingOutlined />,
-    business: <UserOutlined />
   };
-
-  const categoryColors = {
-    inbound: '#3b82f6',
-    outbound: '#10b981', 
-    integration: '#f59e0b',
-    technical: '#8b5cf6',
-    business: '#ef4444'
-  };
-
-  const handleAddQuestion = (category) => {
-    setEditingQuestion(null);
-    form.resetFields();
-    form.setFieldValue('category', category);
-    setModalVisible(true);
-  };
-
-  const handleEditQuestion = (question, category) => {
-    setEditingQuestion({ ...question, category });
-    form.setFieldsValue({
-      question: question.question,
-      priority: question.priority,
-      subcategory: question.subcategory,
-      category: category
-    });
-    setModalVisible(true);
-  };
-
-  const handleDeleteQuestion = (questionId, category) => {
-    setQuestions(prev => ({
-      ...prev,
-      [category]: prev[category].filter(q => q.id !== questionId)
-    }));
-    message.success('Question deleted successfully!');
-  };
-
-  const handleSubmit = (values) => {
-    if (editingQuestion) {
-      // Update existing question
-      setQuestions(prev => ({
-        ...prev,
-        [values.category]: prev[values.category].map(q => 
-          q.id === editingQuestion.id 
-            ? { ...q, question: values.question, priority: values.priority, subcategory: values.subcategory }
-            : q
-        )
-      }));
-      message.success('Question updated successfully!');
-    } else {
-      // Add new question
-      const newQuestion = {
-        id: Date.now(),
-        question: values.question,
-        priority: values.priority,
-        subcategory: values.subcategory
-      };
-      
-      setQuestions(prev => ({
-        ...prev,
-        [values.category]: [...prev[values.category], newQuestion]
-      }));
-      message.success('Question added successfully!');
-    }
+const generateAIQuestions = async (values) => {
+    setLoading(true);
     
-    setModalVisible(false);
-    form.resetFields();
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const { category, priority, complexity } = values;
+      const count = questionCount;
+      
+      const categoryQuestions = demoQuestions[category] || demoQuestions.receiving;
+      const selectedQuestions = categoryQuestions.slice(0, count);
+      
+      // Add metadata to questions
+      const questionsWithMeta = selectedQuestions.map((item, index) => ({
+        ...item,
+        id: Date.now() + index,
+        category,
+        priority,
+        complexity,
+        generated: true
+      }));
+      
+      setGeneratedQuestions(questionsWithMeta);
+      setShowResults(true);
+      message.success(`Generated ${count} AI questions for ${categoryInfo[category].title}!`);
+      
+    } catch (error) {
+      message.error('Error generating questions. Showing demo questions instead.');
+      
+      // Fallback to demo questions
+      const category = values.category || 'receiving';
+      const categoryQuestions = demoQuestions[category];
+      const selectedQuestions = categoryQuestions.slice(0, questionCount);
+      
+      const questionsWithMeta = selectedQuestions.map((item, index) => ({
+        ...item,
+        id: Date.now() + index,
+        category,
+        priority: values.priority || 'medium',
+        complexity: values.complexity || 'intermediate',
+        generated: true
+      }));
+      
+      setGeneratedQuestions(questionsWithMeta);
+      setShowResults(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const renderQuestionCard = (question, category) => (
-    <Card 
-      key={question.id}
-      size="small"
-      className={`question-card priority-${question.priority}`}
-      style={{ marginBottom: '12px' }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-            <Tag color="blue" size="small">{question.subcategory}</Tag>
-            <Tag color={
-              question.priority === 'high' ? 'red' : 
-              question.priority === 'medium' ? 'orange' : 'green'
-            } size="small">
-              {question.priority?.toUpperCase()}
-            </Tag>
-          </div>
-          <div style={{ fontWeight: '500', lineHeight: '1.4' }}>
-            {question.question}
-          </div>
-        </div>
-        <Space>
-          <Button 
-            type="text" 
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEditQuestion(question, category)}
-          />
-          <Popconfirm
-            title="Delete this question?"
-            description="Are you sure you want to delete this question?"
-            onConfirm={() => handleDeleteQuestion(question.id, category)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button 
-              type="text" 
-              size="small"
-              icon={<DeleteOutlined />}
-              danger
-            />
-          </Popconfirm>
-        </Space>
-      </div>
-    </Card>
-  );
+  const getPriorityColor = (priority) => {
+    const colors = {
+      high: '#ff4d4f',
+      medium: '#faad14',
+      low: '#52c41a',
+      mixed: '#1890ff'
+    };
+    return colors[priority] || '#1890ff';
+  };
 
-  const tabItems = [
-    {
-      key: 'inbound',
-      label: (
-        <span>
-          <InboxOutlined />
-          Inbound ({questions.inbound.length})
-        </span>
-      ),
-      children: (
-        <div>
-          <div style={{ marginBottom: '24px' }}>
-            <Button 
-              type="primary"
-              icon={<PlusOutlined />}
-              className="modern-btn modern-btn-primary"
-              onClick={() => handleAddQuestion('inbound')}
-            >
-              Add Inbound Question
-            </Button>
-          </div>
-          {questions.inbound.map(question => renderQuestionCard(question, 'inbound'))}
-        </div>
-      ),
-    },
-    {
-      key: 'outbound',
-      label: (
-        <span>
-          <SendOutlined />
-          Outbound ({questions.outbound.length})
-        </span>
-      ),
-      children: (
-        <div>
-          <div style={{ marginBottom: '24px' }}>
-            <Button 
-              type="primary"
-              icon={<PlusOutlined />}
-              className="modern-btn modern-btn-primary"
-              onClick={() => handleAddQuestion('outbound')}
-            >
-              Add Outbound Question
-            </Button>
-          </div>
-          {questions.outbound.map(question => renderQuestionCard(question, 'outbound'))}
-        </div>
-      ),
-    },
-    {
-      key: 'integration',
-      label: (
-        <span>
-          <ApiOutlined />
-          Integration ({questions.integration.length})
-        </span>
-      ),
-      children: (
-        <div>
-          <div style={{ marginBottom: '24px' }}>
-            <Button 
-              type="primary"
-              icon={<PlusOutlined />}
-              className="modern-btn modern-btn-primary"
-              onClick={() => handleAddQuestion('integration')}
-            >
-              Add Integration Question
-            </Button>
-          </div>
-          {questions.integration.map(question => renderQuestionCard(question, 'integration'))}
-        </div>
-      ),
-    },
-    {
-      key: 'technical',
-      label: (
-        <span>
-          <SettingOutlined />
-          Technical ({questions.technical.length})
-        </span>
-      ),
-      children: (
-        <div>
-          <div style={{ marginBottom: '24px' }}>
-            <Button 
-              type="primary"
-              icon={<PlusOutlined />}
-              className="modern-btn modern-btn-primary"
-              onClick={() => handleAddQuestion('technical')}
-            >
-              Add Technical Question
-            </Button>
-          </div>
-          {questions.technical.map(question => renderQuestionCard(question, 'technical'))}
-        </div>
-      ),
-    },
-    {
-      key: 'business',
-      label: (
-        <span>
-          <UserOutlined />
-          Business ({questions.business.length})
-        </span>
-      ),
-      children: (
-        <div>
-          <div style={{ marginBottom: '24px' }}>
-            <Button 
-              type="primary"
-              icon={<PlusOutlined />}
-              className="modern-btn modern-btn-primary"
-              onClick={() => handleAddQuestion('business')}
-            >
-              Add Business Question
-            </Button>
-          </div>
-          {questions.business.map(question => renderQuestionCard(question, 'business'))}
-        </div>
-      ),
-    },
-  ];
+  const renderAIQuestionsTab = () => (
+    <div style={{ padding: '20px 0' }}>
+      {/* Large Alert Banner */}
+      <Alert
+        message="🤖 AI QUESTION GENERATOR - GENERATE UNLIMITED WMS QUESTIONS!"
+        description="This is the AI-powered question generation feature. Use the form below to generate customized WMS implementation questions using artificial intelligence."
+        type="success"
+        showIcon
+        style={{ 
+          marginBottom: 30,
+          background: 'linear-gradient(45deg, #52c41a, #73d13d)',
+          border: 'none',
+          borderRadius: 12,
+          fontSize: '16px',
+          fontWeight: 'bold'
+        }}
+      />
 
-  return (
-    <div className="main-content fade-in">
-      <div className="page-header">
-        <h1 className="page-title">Question Bank</h1>
-        <p className="page-subtitle">
-          Manage your WMS consulting questions organized by categories. Add, edit, or remove questions as needed.
-        </p>
-      </div>
-
-      {/* Question Stats */}
-      <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
-        {Object.entries(questions).map(([category, categoryQuestions]) => (
-          <Col xs={24} sm={12} lg={8} xl={4.8} key={category}>
-            <Card className="modern-card" style={{ textAlign: 'center' }}>
-              <div 
-                className="stat-card-icon"
-                style={{ 
-                  margin: '0 auto 16px',
-                  background: categoryColors[category],
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  fontSize: '24px'
-                }}
-              >
-                {categoryIcons[category]}
-              </div>
-              <div className="stat-card-value">{categoryQuestions.length}</div>
-              <div className="stat-card-label">{category.charAt(0).toUpperCase() + category.slice(1)}</div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      {/* Question Categories */}
-      <Card className="modern-card">
-        <Tabs items={tabItems} />
-      </Card>
-
-      {/* Add/Edit Question Modal */}
-      <Modal
-        title={
-          <div style={{ 
-            fontSize: '20px', 
-            fontWeight: '600',
-            color: '#0f172a',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff'
-            }}>
-              {editingQuestion ? <EditOutlined /> : <PlusOutlined />}
-            </div>
-            {editingQuestion ? 'Edit Question' : 'Add New Question'}
-          </div>
-        }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={700}
-        className="modern-modal"
+      <Card 
+        style={{ 
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          border: 'none',
+          borderRadius: 15,
+          marginBottom: 30
+        }}
       >
+        <div style={{ color: 'white', textAlign: 'center', marginBottom: 30 }}>
+          <Title level={2} style={{ color: 'white', margin: 0 }}>
+            🤖 AI QUESTION GENERATOR
+          </Title>
+          <Paragraph style={{ color: 'white', fontSize: '16px', margin: '10px 0 0 0' }}>
+            Generate unlimited WMS questions using artificial intelligence!
+          </Paragraph>
+        </div>
+
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleSubmit}
-          className="modern-form"
-          style={{ marginTop: '24px' }}
+          onFinish={generateAIQuestions}
+          initialValues={{
+            category: 'receiving',
+            priority: 'high',
+            complexity: 'intermediate'
+          }}
         >
-          <Form.Item
-            label="Category"
-            name="category"
-            rules={[{ required: true, message: 'Please select category' }]}
-          >
-            <Select placeholder="Select category" size="large">
-              <Option value="inbound">Inbound</Option>
-              <Option value="outbound">Outbound</Option>
-              <Option value="integration">Integration</Option>
-              <Option value="technical">Technical</Option>
-              <Option value="business">Business</Option>
-            </Select>
-          </Form.Item>
+          <Row gutter={20}>
+            <Col span={12}>
+              <Form.Item name="category" label={<span style={{ color: 'white', fontWeight: 'bold' }}>📂 Select Category:</span>}>
+                <Select size="large">
+                  {Object.entries(categoryInfo).map(([key, info]) => (
+                    <Option key={key} value={key}>
+                      {info.icon} {info.title}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label={<span style={{ color: 'white', fontWeight: 'bold' }}>🔢 Number of Questions: {questionCount}</span>}>
+                <Slider
+                  min={5}
+                  max={25}
+                  value={questionCount}
+                  onChange={setQuestionCount}
+                  marks={{
+                    5: '5',
+                    10: '10',
+                    15: '15',
+                    20: '20',
+                    25: '25'
+                  }}
+                  trackStyle={{ background: '#feca57' }}
+                  handleStyle={{ borderColor: '#feca57', backgroundColor: '#feca57' }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            label="Subcategory"
-            name="subcategory"
-            rules={[{ required: true, message: 'Please enter subcategory' }]}
-          >
-            <Input 
-              placeholder="e.g., Receiving, Picking, ERP Integration"
-              size="large"
-            />
-          </Form.Item>
-          
-          <Form.Item
-            label="Question"
-            name="question"
-            rules={[{ required: true, message: 'Please enter question' }]}
-          >
-            <TextArea 
-              rows={4}
-              placeholder="Enter your WMS consulting question..."
-              style={{ resize: 'none' }}
-            />
-          </Form.Item>
+          <Row gutter={20}>
+            <Col span={12}>
+              <Form.Item name="priority" label={<span style={{ color: 'white', fontWeight: 'bold' }}>⭐ Priority Level:</span>}>
+                <Select size="large">
+                  <Option value="high">🔴 High Priority</Option>
+                  <Option value="medium">🟡 Medium Priority</Option>
+                  <Option value="low">🟢 Low Priority</Option>
+                  <Option value="mixed">🎯 Mixed Priorities</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="complexity" label={<span style={{ color: 'white', fontWeight: 'bold' }}>🎯 Complexity Level:</span>}>
+                <Select size="large">
+                  <Option value="beginner">🟢 Beginner</Option>
+                  <Option value="intermediate">🟡 Intermediate</Option>
+                  <Option value="advanced">🔴 Advanced</Option>
+                  <Option value="expert">🚀 Expert</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            label="Priority"
-            name="priority"
-            rules={[{ required: true, message: 'Please select priority' }]}
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            size="large"
+            style={{
+              width: '100%',
+              height: 60,
+              background: 'linear-gradient(45deg, #ff6b6b, #feca57)',
+              border: 'none',
+              borderRadius: 12,
+              fontSize: '18px',
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+            }}
           >
-            <Select placeholder="Select priority" size="large">
-              <Option value="high">High</Option>
-              <Option value="medium">Medium</Option>
-              <Option value="low">Low</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 0, marginTop: '32px' }}>
-            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button 
-                onClick={() => setModalVisible(false)}
-                className="modern-btn modern-btn-secondary"
-                size="large"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="primary" 
-                htmlType="submit"
-                className="modern-btn modern-btn-primary"
-                size="large"
-              >
-                {editingQuestion ? 'Update Question' : 'Add Question'}
-              </Button>
-            </Space>
-          </Form.Item>
+            {loading ? '🔄 Generating AI Questions...' : '🚀 GENERATE AI QUESTIONS NOW! 🤖'}
+          </Button>
         </Form>
-      </Modal>
+
+        <Alert
+          message="💡 DEMO MODE"
+          description="This generates sample AI questions for demonstration. In production with API keys, this connects to real AI services!"
+          type="info"
+          style={{ 
+            marginTop: 20,
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: 'white'
+          }}
+        />
+      </Card>
+{/* Generated Questions Results */}
+      {showResults && (
+        <Card 
+          title={
+            <Title level={3} style={{ color: '#667eea', margin: 0 }}>
+              🎉 Generated AI Questions
+            </Title>
+          }
+          style={{ borderRadius: 12 }}
+        >
+          <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center', background: 'rgba(102, 126, 234, 0.1)' }}>
+                <Title level={2} style={{ color: '#feca57', margin: 0 }}>{generatedQuestions.length}</Title>
+                <Text>Questions Generated</Text>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center', background: 'rgba(102, 126, 234, 0.1)' }}>
+                <Title level={2} style={{ color: '#feca57', margin: 0 }}>
+                  {generatedQuestions[0]?.category?.charAt(0).toUpperCase() + generatedQuestions[0]?.category?.slice(1) || '-'}
+                </Title>
+                <Text>Category</Text>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center', background: 'rgba(102, 126, 234, 0.1)' }}>
+                <Title level={2} style={{ color: '#feca57', margin: 0 }}>
+                  {generatedQuestions[0]?.priority?.charAt(0).toUpperCase() + generatedQuestions[0]?.priority?.slice(1) || '-'}
+                </Title>
+                <Text>Priority</Text>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center', background: 'rgba(102, 126, 234, 0.1)' }}>
+                <Title level={2} style={{ color: '#feca57', margin: 0 }}>
+                  {generatedQuestions[0]?.complexity?.charAt(0).toUpperCase() + generatedQuestions[0]?.complexity?.slice(1) || '-'}
+                </Title>
+                <Text>Complexity</Text>
+              </Card>
+            </Col>
+          </Row>
+
+          <div>
+            {generatedQuestions.map((question, index) => (
+              <Card 
+                key={question.id}
+                size="small" 
+                style={{ 
+                  marginBottom: 15,
+                  borderLeft: `4px solid ${getPriorityColor(question.priority)}`,
+                  background: '#f8f9fa'
+                }}
+              >
+                <Title level={5} style={{ color: '#667eea', marginBottom: 8 }}>
+                  Q{index + 1}: {question.q}
+                </Title>
+                <Space wrap>
+                  {question.tags.map(tag => (
+                    <Tag key={tag} color={getPriorityColor(question.priority)}>
+                      {tag}
+                    </Tag>
+                  ))}
+                  <Tag color="#667eea">{question.complexity}</Tag>
+                  <Tag color="#5f27cd">AI Generated</Tag>
+                </Space>
+              </Card>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+
+  const renderCategoryTab = (categoryKey) => {
+    const info = categoryInfo[categoryKey];
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '4rem', marginBottom: '20px' }}>
+          {info.icon}
+        </div>
+        <Title level={2}>{info.title}</Title>
+        <Paragraph style={{ fontSize: '16px', color: '#666' }}>
+          {info.description}
+        </Paragraph>
+        
+        <Card 
+          style={{ 
+            marginTop: 30, 
+            textAlign: 'left',
+            background: '#f8f9fa',
+            borderRadius: 10 
+          }}
+        >
+          <Title level={4}>📝 Sample Questions:</Title>
+          <ul style={{ lineHeight: 1.6 }}>
+            {demoQuestions[categoryKey]?.slice(0, 4).map((q, idx) => (
+              <li key={idx}>{q.q}</li>
+            ))}
+          </ul>
+        </Card>
+
+        <Alert
+          message="💡 Want AI questions? Go to the 'AI Questions' tab!"
+          type="info"
+          showIcon
+          style={{ marginTop: 20 }}
+        />
+      </div>
+    );
+  };
+
+  const tabItems = [
+    // AI QUESTIONS TAB - FIRST AND MOST PROMINENT
+    {
+      key: 'ai-questions',
+      label: (
+        <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
+          <RobotOutlined style={{ color: '#ff4757', fontSize: '18px' }} />
+          <span style={{ marginLeft: 8, color: '#ff4757' }}>🤖 AI QUESTIONS</span>
+          <Tag style={{ marginLeft: 8 }} color="red">GENERATE HERE!</Tag>
+        </span>
+      ),
+      children: renderAIQuestionsTab()
+    },
+    // Regular category tabs
+    ...Object.entries(categoryInfo).map(([key, info]) => ({
+      key,
+      label: (
+        <span style={{ fontSize: '14px' }}>
+          {info.icon}
+          <span style={{ marginLeft: 8 }}>{info.title}</span>
+          <Tag style={{ marginLeft: 8 }} color="blue">
+            {demoQuestions[key]?.length || 0}
+          </Tag>
+        </span>
+      ),
+      children: renderCategoryTab(key)
+    }))
+  ];
+
+  return (
+    <div>
+      {/* Page Header */}
+      <div style={{ marginBottom: 24 }}>
+        <Title level={1} style={{ color: '#667eea', margin: 0 }}>
+          🤖 AI-Powered Question Bank
+        </Title>
+        <Paragraph style={{ fontSize: '16px', color: '#666', margin: '8px 0 0 0' }}>
+          Generate unlimited WMS implementation questions using artificial intelligence
+        </Paragraph>
+      </div>
+
+      {/* Main Warning Banner */}
+      <Alert
+        message="🚨 LOOKING FOR AI QUESTION GENERATION?"
+        description="Click the '🤖 AI QUESTIONS' tab below to generate unlimited WMS questions with AI!"
+        type="warning"
+        showIcon
+        style={{
+          marginBottom: 24,
+          padding: 20,
+          fontSize: '16px',
+          fontWeight: 'bold',
+          background: 'linear-gradient(45deg, #ff6b6b, #feca57)',
+          border: 'none',
+          borderRadius: 12,
+          color: 'white'
+        }}
+        closable={false}
+      />
+
+      {/* Tabs */}
+      <Tabs
+        defaultActiveKey="ai-questions"
+        items={tabItems}
+        size="large"
+        style={{
+          background: 'white',
+          borderRadius: 15,
+          padding: '0 0 20px 0',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }}
+      />
     </div>
   );
 };
