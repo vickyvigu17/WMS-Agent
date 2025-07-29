@@ -407,3 +407,37 @@ app.listen(PORT, () => {
   console.log(`   OpenAI Key: ${process.env.OPENAI_API_KEY ? '✅ Present' : '❌ Missing'}`);
   console.log(`   SERP Key: ${process.env.SERP_API_KEY ? '✅ Present' : '❌ Missing'}`);
 });
+// AI Question Generation endpoint (add this if not present)
+app.post('/api/questions/generate', async (req, res) => {
+  try {
+    const { category, count = 10, priority = 'medium', complexity = 'intermediate' } = req.body;
+    
+    // Use the same demo questions from QUICK_DEPLOY.html
+    const demoQuestions = {
+      receiving: [
+        { q: "How do you currently validate incoming shipment quantities against purchase orders?", tags: ["Process", "Accuracy"] },
+        { q: "What is your strategy for handling damaged goods during receiving?", tags: ["Quality", "Process"] },
+        // ... add all the questions from QUICK_DEPLOY.html
+      ],
+      // ... other categories
+    };
+    
+    const categoryQuestions = demoQuestions[category] || demoQuestions.receiving;
+    const selectedQuestions = categoryQuestions.slice(0, count).map((item, index) => ({
+      ...item,
+      id: Date.now() + index,
+      category,
+      priority,
+      complexity,
+      generated: true
+    }));
+    
+    res.json({
+      success: true,
+      questions: selectedQuestions,
+      total: selectedQuestions.length
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
