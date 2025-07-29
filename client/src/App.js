@@ -3,34 +3,20 @@ import { Layout, Menu, theme } from 'antd';
 import {
   DashboardOutlined,
   ProjectOutlined,
-  QuestionCircleOutlined,
   RobotOutlined
 } from '@ant-design/icons';
-import Dashboard from './pages/Dashboard';
-import Projects from './pages/Projects';
 import QuestionBank from './pages/QuestionBank';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
 
 function App() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState('questions');
   const {
     token: { colorBgContainer },
   } = theme.useToken();
 
   const menuItems = [
-    {
-      key: 'dashboard',
-      icon: <DashboardOutlined />,
-      label: 'Dashboard',
-    },
-    {
-      key: 'projects',
-      icon: <ProjectOutlined />,
-      label: 'Projects',
-    },
     {
       key: 'questions',
       icon: <RobotOutlined style={{ color: '#ff4757' }} />,
@@ -42,27 +28,14 @@ function App() {
     },
   ];
 
-  const renderContent = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'projects':
-        return <Projects />;
-      case 'questions':
-        return <QuestionBank />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider trigger={null} collapsible collapsed={collapsed}>
+      <Sider trigger={null} collapsible={false}>
         <div className="demo-logo-vertical" />
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['dashboard']}
+          defaultSelectedKeys={['questions']}
           selectedKeys={[currentPage]}
           items={menuItems}
           onClick={({ key }) => setCurrentPage(key)}
@@ -81,11 +54,11 @@ function App() {
         >
           <div style={{ paddingLeft: 24 }}>
             <h2 style={{ margin: 0, color: '#667eea' }}>
-              🤖 WMS Implementation Consultant Agent
+              🤖 WMS AI Questions Generator
             </h2>
           </div>
           <div style={{ color: '#667eea', fontWeight: 'bold' }}>
-            AI-Powered WMS Questions & Research
+            AI-Powered Question Generation
           </div>
         </Header>
         <Content
@@ -96,7 +69,7 @@ function App() {
             background: colorBgContainer,
           }}
         >
-          {renderContent()}
+          <QuestionBank />
         </Content>
       </Layout>
     </Layout>
