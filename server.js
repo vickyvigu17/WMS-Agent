@@ -411,15 +411,86 @@ app.listen(PORT, () => {
 app.post('/api/questions/generate', async (req, res) => {
   try {
     const { category, count = 10, priority = 'medium', complexity = 'intermediate' } = req.body;
+
+    // AI Question Generation endpoint
+app.post('/api/questions/generate', async (req, res) => {
+  try {
+    const { category, count = 10, priority = 'medium', complexity = 'intermediate' } = req.body;
     
-    // Use the same demo questions from QUICK_DEPLOY.html
+    // Complete demo questions database (same as QUICK_DEPLOY.html)
     const demoQuestions = {
       receiving: [
         { q: "How do you currently validate incoming shipment quantities against purchase orders?", tags: ["Process", "Accuracy"] },
         { q: "What is your strategy for handling damaged goods during receiving?", tags: ["Quality", "Process"] },
-        // ... add all the questions from QUICK_DEPLOY.html
+        { q: "How do you manage receiving operations during peak seasons?", tags: ["Capacity", "Planning"] },
+        { q: "What documentation is required for your receiving process?", tags: ["Compliance", "Documentation"] },
+        { q: "How do you handle discrepancies between expected and actual deliveries?", tags: ["Exception", "Process"] },
+        { q: "What are your receiving dock capacity and layout requirements?", tags: ["Infrastructure", "Capacity"] },
+        { q: "How do you prioritize incoming shipments for processing?", tags: ["Priority", "Workflow"] },
+        { q: "What quality control measures do you have during receiving?", tags: ["Quality", "Control"] },
+        { q: "How do you handle cross-docking operations?", tags: ["Cross-dock", "Efficiency"] },
+        { q: "What are your appointment scheduling requirements for vendors?", tags: ["Scheduling", "Vendor"] }
       ],
-      // ... other categories
+      inventory: [
+        { q: "What methods do you use for inventory classification and prioritization?", tags: ["Classification", "Strategy"] },
+        { q: "How do you manage inventory across multiple locations?", tags: ["Multi-site", "Control"] },
+        { q: "What is your approach to safety stock calculations?", tags: ["Planning", "Optimization"] },
+        { q: "How do you handle seasonal inventory fluctuations?", tags: ["Seasonality", "Planning"] },
+        { q: "What KPIs do you track for inventory performance?", tags: ["Metrics", "Performance"] },
+        { q: "How do you manage slow-moving and obsolete inventory?", tags: ["Obsolete", "Management"] },
+        { q: "What cycle counting strategies do you employ?", tags: ["Counting", "Accuracy"] },
+        { q: "How do you handle lot tracking and expiration dates?", tags: ["Lot", "Expiration"] },
+        { q: "What are your inventory accuracy requirements?", tags: ["Accuracy", "Requirements"] },
+        { q: "How do you manage inventory replenishment triggers?", tags: ["Replenishment", "Triggers"] }
+      ],
+      picking: [
+        { q: "What picking strategies do you employ for different order types?", tags: ["Strategy", "Optimization"] },
+        { q: "How do you minimize pick errors and improve accuracy?", tags: ["Accuracy", "Quality"] },
+        { q: "What technology do you use for pick path optimization?", tags: ["Technology", "Efficiency"] },
+        { q: "How do you handle partial picks and backorders?", tags: ["Exception", "Process"] },
+        { q: "What is your approach to batch picking vs single order picking?", tags: ["Strategy", "Efficiency"] },
+        { q: "How do you manage pick slot optimization and slotting?", tags: ["Slotting", "Optimization"] },
+        { q: "What are your peak picking volume requirements?", tags: ["Volume", "Capacity"] },
+        { q: "How do you handle priority orders and rush shipments?", tags: ["Priority", "Rush"] },
+        { q: "What pick confirmation methods do you use?", tags: ["Confirmation", "Accuracy"] },
+        { q: "How do you manage wave planning and release?", tags: ["Wave", "Planning"] }
+      ],
+      shipping: [
+        { q: "How do you optimize carrier selection and routing?", tags: ["Optimization", "Carriers"] },
+        { q: "What is your process for handling expedited shipments?", tags: ["Urgency", "Process"] },
+        { q: "How do you manage shipping costs and rate shopping?", tags: ["Cost", "Optimization"] },
+        { q: "What tracking and visibility do you provide to customers?", tags: ["Visibility", "Service"] },
+        { q: "How do you handle international shipping requirements?", tags: ["International", "Compliance"] },
+        { q: "What are your packaging and labeling requirements?", tags: ["Packaging", "Labeling"] },
+        { q: "How do you manage shipping documentation and compliance?", tags: ["Documentation", "Compliance"] },
+        { q: "What are your on-time delivery performance targets?", tags: ["Performance", "Delivery"] },
+        { q: "How do you handle shipping damage and claims?", tags: ["Damage", "Claims"] },
+        { q: "What consolidation strategies do you use for outbound shipments?", tags: ["Consolidation", "Strategy"] }
+      ],
+      integration: [
+        { q: "What are your real-time data synchronization requirements?", tags: ["Integration", "Real-time"] },
+        { q: "How do you handle data mapping between systems?", tags: ["Data", "Mapping"] },
+        { q: "What APIs and web services do you currently use?", tags: ["API", "Technology"] },
+        { q: "How do you manage master data consistency across systems?", tags: ["Data", "Consistency"] },
+        { q: "What are your system backup and disaster recovery requirements?", tags: ["Backup", "Recovery"] },
+        { q: "How do you handle EDI transactions and requirements?", tags: ["EDI", "Transactions"] },
+        { q: "What ERP system integration points are critical?", tags: ["ERP", "Integration"] },
+        { q: "How do you manage data validation and error handling?", tags: ["Validation", "Errors"] },
+        { q: "What are your reporting and analytics requirements?", tags: ["Reporting", "Analytics"] },
+        { q: "How do you handle system performance monitoring?", tags: ["Performance", "Monitoring"] }
+      ],
+      technical: [
+        { q: "What are your scalability requirements for the WMS?", tags: ["Scalability", "Architecture"] },
+        { q: "How do you handle system performance during peak operations?", tags: ["Performance", "Peak"] },
+        { q: "What are your data security and compliance requirements?", tags: ["Security", "Compliance"] },
+        { q: "How do you manage user access and permissions?", tags: ["Security", "Access"] },
+        { q: "What are your system availability and uptime requirements?", tags: ["Availability", "SLA"] },
+        { q: "How do you handle database performance and optimization?", tags: ["Database", "Performance"] },
+        { q: "What are your mobile device and hardware requirements?", tags: ["Mobile", "Hardware"] },
+        { q: "How do you manage system upgrades and maintenance?", tags: ["Upgrades", "Maintenance"] },
+        { q: "What are your cloud vs on-premise preferences?", tags: ["Cloud", "Infrastructure"] },
+        { q: "How do you handle system testing and validation?", tags: ["Testing", "Validation"] }
+      ]
     };
     
     const categoryQuestions = demoQuestions[category] || demoQuestions.receiving;
@@ -441,3 +512,4 @@ app.post('/api/questions/generate', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+    
