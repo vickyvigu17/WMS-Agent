@@ -1,4 +1,4 @@
-
+{
   "name": "wms-consultant-agent",
   "version": "1.0.0",
   "description": "AI-Powered WMS Implementation Consultant Agent",
@@ -7,14 +7,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "nodemon server.js || node server.js",
+    "server": "node server.js",
     "client": "cd client && npm start",
     "build": "cd client && npm install && npm run build && cp -r build/* ../public/",
-    "install-all": "npm install && cd client && npm install",
-    "deploy": "npm run build && npm start",
-    "heroku-postbuild": "cd client && npm install && npm run build",
-    "test": "cd client && npm test",
-    "clean": "rm -rf public/* && rm -rf client/build"
+    "install-all": "npm install && cd client && npm install"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -25,31 +21,10 @@
     "axios": "^1.5.0",
     "concurrently": "^8.2.0"
   },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=16.0.0"
   },
-  "keywords": [
-    "wms",
-    "ai",
-    "consultant",
-    "questions",
-    "research",
-    "warehouse",
-    "management",
-    "react",
-    "nodejs"
-  ],
+  "keywords": ["wms", "ai", "consultant", "questions", "research"],
   "author": "WMS AI Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vickyvigu17/WMS-Agent.git"
-  },
-  "bugs": {
-    "url": "https://github.com/vickyvigu17/WMS-Agent/issues"
-  }
+  "license": "MIT"
 }
