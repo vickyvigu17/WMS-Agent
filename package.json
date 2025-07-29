@@ -4,11 +4,7 @@
   "description": "AI-Powered WMS Implementation Consultant Agent",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "mkdir -p public && cd client && npm install && npm run build && cp -r build/* ../public/",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "node server.js",
-    "client": "cd client && npm start"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -17,13 +13,9 @@
     "express-rate-limit": "^6.10.0",
     "dotenv": "^16.3.1",
     "axios": "^1.5.0",
-    "concurrently": "^8.2.0"
+    "path": "^0.12.7"
   },
   "engines": {
-    "node": "18.x",
-    "npm": ">=8.0.0"
-  },
-  "keywords": ["wms", "ai", "consultant"],
-  "author": "WMS AI Team",
-  "license": "MIT"
+    "node": "18.x"
+  }
 }
