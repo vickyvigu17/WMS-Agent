@@ -77,7 +77,7 @@ const QuestionBank = () => {
     }
   };
 
-  // Demo questions database (same as HTML version)
+  // Demo questions database (fallback)
   const demoQuestions = {
     receiving: [
       { q: "How do you currently validate incoming shipment quantities against purchase orders?", tags: ["Process", "Accuracy"] },
@@ -152,32 +152,34 @@ const QuestionBank = () => {
       { q: "How do you handle system testing and validation?", tags: ["Testing", "Validation"] }
     ]
   };
-const generateAIQuestions = async (values) => {
+
+  // UPDATED: API call to server instead of demo only
+  const generateAIQuestions = async (values) => {
     setLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch('/api/questions/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category: values.category,
+          count: questionCount,
+          priority: values.priority,
+          complexity: values.complexity
+        })
+      });
       
-      const { category, priority, complexity } = values;
-      const count = questionCount;
+      const data = await response.json();
       
-      const categoryQuestions = demoQuestions[category] || demoQuestions.receiving;
-      const selectedQuestions = categoryQuestions.slice(0, count);
-      
-      // Add metadata to questions
-      const questionsWithMeta = selectedQuestions.map((item, index) => ({
-        ...item,
-        id: Date.now() + index,
-        category,
-        priority,
-        complexity,
-        generated: true
-      }));
-      
-      setGeneratedQuestions(questionsWithMeta);
-      setShowResults(true);
-      message.success(`Generated ${count} AI questions for ${categoryInfo[category].title}!`);
+      if (data.success) {
+        setGeneratedQuestions(data.questions);
+        setShowResults(true);
+        message.success(`Generated ${data.total} AI questions for ${categoryInfo[values.category].title}!`);
+      } else {
+        throw new Error(data.error);
+      }
       
     } catch (error) {
       message.error('Error generating questions. Showing demo questions instead.');
@@ -338,7 +340,7 @@ const generateAIQuestions = async (values) => {
 
         <Alert
           message="💡 DEMO MODE"
-          description="This generates sample AI questions for demonstration. In production with API keys, this connects to real AI services!"
+          description="This connects to your server API for AI question generation. Add OpenAI API keys for real AI generation!"
           type="info"
           style={{ 
             marginTop: 20,
@@ -348,7 +350,8 @@ const generateAIQuestions = async (values) => {
           }}
         />
       </Card>
-{/* Generated Questions Results */}
+
+      {/* Generated Questions Results */}
       {showResults && (
         <Card 
           title={
